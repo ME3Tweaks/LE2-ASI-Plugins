@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31624.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2StreamingLevelsHUD", "LE2StreamingLevelsHUD\LE2StreamingLevelsHUD.vcxproj", "{24261DB1-E217-4234-B048-1ACEA2F67237}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2-SDK", "LE2-SDK\LE2-SDK.vcxproj", "{7F45825C-9039-4117-93E5-3F8D7D5F4FA8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{24261DB1-E217-4234-B048-1ACEA2F67237}.Debug|x64.ActiveCfg = Debug|x64
+		{24261DB1-E217-4234-B048-1ACEA2F67237}.Debug|x64.Build.0 = Debug|x64
+		{24261DB1-E217-4234-B048-1ACEA2F67237}.Release|x64.ActiveCfg = Release|x64
+		{24261DB1-E217-4234-B048-1ACEA2F67237}.Release|x64.Build.0 = Release|x64
+		{7F45825C-9039-4117-93E5-3F8D7D5F4FA8}.Debug|x64.ActiveCfg = Debug|x64
+		{7F45825C-9039-4117-93E5-3F8D7D5F4FA8}.Debug|x64.Build.0 = Debug|x64
+		{7F45825C-9039-4117-93E5-3F8D7D5F4FA8}.Release|x64.ActiveCfg = Release|x64
+		{7F45825C-9039-4117-93E5-3F8D7D5F4FA8}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {18E7EE0C-4EA7-42D4-8AD8-AEA9A461ACFB}
+	EndGlobalSection
+EndGlobal
