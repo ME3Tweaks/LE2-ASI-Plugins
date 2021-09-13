@@ -68,6 +68,25 @@ public:
 		return this->Count;
 	};
 
+	bool Any()
+	{
+		return this->Count > 0;
+	}
+
+	/// <summary>
+	/// Do not use this on TArrays you don't create yourself, as the Unreal allocator won't work with them.
+	/// </summary>
+	/// <param name="InputData"></param>
+	void Add(T InputData)
+	{
+		if (Count >= Max)
+		{
+			Max = Count + 3 * Count / 8 + 16;
+			Data = (T*)realloc(Data, sizeof(T) * Max);
+		}
+		Data[Count++] = InputData;
+	};
+
 	const T& operator() (int i) const
 	{
 		return this->Data[i];
