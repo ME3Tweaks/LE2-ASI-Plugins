@@ -16,7 +16,7 @@
     <ProjectGuid>{D56CAF33-BA78-4541-98EE-02BCD192EECF}</ProjectGuid>
     <RootNamespace>SeqActLog Enabler</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>DebugLogger</ProjectName>
+    <ProjectName>LE2DebugLogger</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -52,7 +52,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.asi</TargetExt>
-    <TargetName>DebugLogger</TargetName>
+    <TargetName>LE2DebugLogger</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
