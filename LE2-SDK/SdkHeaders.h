@@ -209,6 +209,21 @@ struct FScriptDelegate
 	struct FName		FunctionName;
 };
 
+struct FObjectResource
+{
+	struct FName ObjectName;
+	int	OuterIndex;
+};
+
+struct FObjectImport : public FObjectResource
+{
+	struct FName ClassPackage;
+	struct FName ClassName;
+	class UObject* Object;
+	class ULinkerLoad* SourceLinker;
+	int SourceIndex;
+};
+
 /*
 # ========================================================================================= #
 # Includes
