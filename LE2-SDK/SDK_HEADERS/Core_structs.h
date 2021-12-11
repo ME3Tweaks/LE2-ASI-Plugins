@@ -54,15 +54,15 @@ struct FPlane : FVector
 	float                                              W;                                                		// 0x000C (0x0004) [0x0000000000000001]              ( CPF_Edit )
 };
 
-// ScriptStruct Core.Object.Guid
-// 0x0010
-struct FGuid
-{
-	int                                                A;                                                		// 0x0000 (0x0004) [0x0000000000000000]              
-	int                                                B;                                                		// 0x0004 (0x0004) [0x0000000000000000]              
-	int                                                C;                                                		// 0x0008 (0x0004) [0x0000000000000000]              
-	int                                                D;                                                		// 0x000C (0x0004) [0x0000000000000000]              
-};
+//// ScriptStruct Core.Object.Guid
+//// 0x0010
+//struct FGuid
+//{
+//	int                                                A;                                                		// 0x0000 (0x0004) [0x0000000000000000]              
+//	int                                                B;                                                		// 0x0004 (0x0004) [0x0000000000000000]              
+//	int                                                C;                                                		// 0x0008 (0x0004) [0x0000000000000000]              
+//	int                                                D;                                                		// 0x000C (0x0004) [0x0000000000000000]              
+//};
 
 // ScriptStruct Core.Object.Vector2D
 // 0x0008

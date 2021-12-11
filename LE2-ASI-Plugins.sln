@@ -8,8 +8,14 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2-SDK", "LE2-SDK\LE2-SDK.vcxproj", "{7F45825C-9039-4117-93E5-3F8D7D5F4FA8}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2KismetLogger", "LE2KismetLogger\KismetLogger.vcxproj", "{1F82E847-1848-4F1E-B458-E008C2FF8F43}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7F45825C-9039-4117-93E5-3F8D7D5F4FA8} = {7F45825C-9039-4117-93E5-3F8D7D5F4FA8}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2DebugLogger", "LE2DebugLogger\LE2DebugLogger.vcxproj", "{D56CAF33-BA78-4541-98EE-02BCD192EECF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7F45825C-9039-4117-93E5-3F8D7D5F4FA8} = {7F45825C-9039-4117-93E5-3F8D7D5F4FA8}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

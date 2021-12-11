@@ -707,7 +707,8 @@ public:
 	unsigned char                                      UnknownData00[0xA4];                           		// 0x0068 (0x00A4) MISSED OFFSET
 	struct TArray<FName>                               NameMap;                                                 // 0x011C (0x0010)
 	struct TArray<FObjectImport>                       ImportMap;                                               // 0x011C (0x0010)
-	unsigned char                                      UnknownData01[0x68];                           		// 0x012C (0x0068) MISSED OFFSET
+	struct TArray<FObjectExport>                       ExportMap;                                               // 0x011C (0x0010)
+	unsigned char                                      UnknownData01[0x58]; // already subbed 12                           		// 0x012C (0x0068) MISSED OFFSET
 	struct FString                                     Filename;                                                // 0x0194 (0x0010)
 	unsigned char                                      UnknownData02[0x8];                           		    // 0x01A4 (0x0008) MISSED OFFSET
 private:
