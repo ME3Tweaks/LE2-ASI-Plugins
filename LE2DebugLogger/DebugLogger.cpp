@@ -2,6 +2,8 @@
 #include <io.h>
 #include <string>
 #include <fstream>
+#include <stack>
+
 #include "../LE2-SDK/Interface.h"
 #include "../LE2-SDK/Common.h"
 #include "../LE2-SDK/ME3TweaksHeader.h"
@@ -11,7 +13,7 @@ SPI_PLUGINSIDE_SUPPORT(L"DebugLogger", L"2.0.0", L"ME3Tweaks", SPI_GAME_LE2, SPI
 SPI_PLUGINSIDE_PRELOAD;
 SPI_PLUGINSIDE_SEQATTACH;
 
-ME3TweaksASILogger logger("DebugLogger v1", "DebugLogger.txt");
+ME3TweaksASILogger logger("DebugLogger v2", "DebugLogger.txt");
 
 // Original Func
 typedef void (WINAPI* tOutputDebugStringW)(LPCWSTR lpcszString);
@@ -29,14 +31,58 @@ void WINAPI OutputDebugStringW_Hook(LPCWSTR lpcszString)
 typedef UObject* (*tCreateImport)(ULinkerLoad* Context, int UIndex);
 tCreateImport CreateImport = nullptr;
 tCreateImport CreateImport_orig = nullptr;
+
+char* GetFullImportName(ULinkerLoad* Context, FObjectImport import)
+{
+	stack<FObjectResource> parentStack;
+	static char cOutBuffer[256];
+	int outerIdx = import.OuterIndex;
+	auto i1 = Context->ExportMap(0);
+	auto i2 = Context->ExportMap(1);
+	auto i3 = Context->ExportMap(2);
+
+	parentStack.push(import); // push self so we are on the end
+	while (outerIdx != 0) {
+		if (outerIdx > 0) {
+			// This import is nested under an export
+			auto exp = Context->ExportMap(outerIdx - 1);
+			exp.Object->Linker;
+			parentStack.push(exp);
+			outerIdx = exp.OuterIndex;
+		}
+		else {
+			// This import is nested under another import
+			auto imp = Context->ImportMap(-outerIdx - 1);
+			parentStack.push(imp);
+			outerIdx = imp.OuterIndex;
+		}
+	}
+
+	bool isFirst = true;
+	while (!parentStack.empty()) {
+		FObjectResource entry = parentStack.top();
+		parentStack.pop();
+		if (isFirst) {
+			isFirst = false;
+			strcpy_s(cOutBuffer, entry.ObjectName.GetName());
+		}
+		else {
+			strcat_s(cOutBuffer, ".");
+			strcat_s(cOutBuffer, entry.ObjectName.GetName());
+		}
+	}
+
+	return cOutBuffer;
+}
+
 UObject* CreateImport_hook(ULinkerLoad* Context, int i)
 {
 	UObject* object = CreateImport_orig(Context, i);
 	if (object == nullptr)
 	{
 		FObjectImport importEntry = Context->ImportMap(i);
-		//writeln("Could not resolve #%d: %hs (%hs) in file: %s", -i - 1, importEntry.ObjectName.GetName(), importEntry.ClassName.GetName(), Context->Filename.Data);
-		logger.writeWideLineToLog(wstring_format(L"Could not resolve #%d: %hs (%hs) in file: %s", -i - 1, importEntry.ObjectName.GetName(), importEntry.ClassName.GetName(), Context->Filename.Data));
+		writeln("Could not resolve #%d: %hs (%hs) in file: %s", -i - 1, GetFullImportName(Context, importEntry), importEntry.ClassName.GetName(), Context->Filename.Data);
+		logger.writeWideLineToLog(wstring_format(L"Could not resolve #%d: %hs (%hs) in file: %s", -i - 1, GetFullImportName(Context, importEntry), importEntry.ClassName.GetName(), Context->Filename.Data));
 		logger.flush();
 	}
 	return object;

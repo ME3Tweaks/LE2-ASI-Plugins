@@ -224,6 +224,37 @@ struct FObjectImport : public FObjectResource
 	int SourceIndex;
 };
 
+// ScriptStruct Core.Object.Guid
+// 0x0010
+struct FGuid
+{
+	int                                                A;                                                		// 0x0000 (0x0004) [0x0000000000000000]              
+	int                                                B;                                                		// 0x0004 (0x0004) [0x0000000000000000]              
+	int                                                C;                                                		// 0x0008 (0x0004) [0x0000000000000000]              
+	int                                                D;                                                		// 0x000C (0x0004) [0x0000000000000000]              
+};
+
+struct FObjectExport : public FObjectResource
+{
+	int ClassIndex;
+	int SuperclassIndex;
+	int ArchetypeIndex;
+	long long ObjectFlags;
+	int SerialSize;
+	int DataOffset;
+
+	int unk1;
+	int unk2;
+
+	class UObject* Object; // The loaded object
+	int next;
+
+	int ExportFlags;
+	TArray<INT> GenerationsObjectCount;
+	FGuid PackageGuid;
+	int PackageFlags;
+};
+
 /*
 # ========================================================================================= #
 # Includes
