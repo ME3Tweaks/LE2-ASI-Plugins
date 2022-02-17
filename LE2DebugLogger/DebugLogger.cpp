@@ -183,7 +183,7 @@ void LogInternal_hook(UObject* callingObject, LE2FFrameHACK* stackFrame)
 	// 0x38 = PreviousFrame?
 	auto name = callingObject->GetName();
 	writeln(L"CALLING NATIVE LOGINTERNAL FOR %hs", name);
-	std::this_thread::sleep_for(chrono::seconds(10));
+	std::this_thread::sleep_for(chrono::seconds(10)); // give time window to attach debugger to running process
 
 	int64 posi = (int64) LogInternal_orig;
 	for(int i = 0; i < 20; i++)
