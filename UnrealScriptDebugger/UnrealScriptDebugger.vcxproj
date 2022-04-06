@@ -13,10 +13,10 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{1F82E847-1848-4F1E-B458-E008C2FF8F43}</ProjectGuid>
-    <RootNamespace>SeqActLog Enabler</RootNamespace>
+    <ProjectGuid>{6172080A-0E24-4B92-9157-5ADBB34C0DA8}</ProjectGuid>
+    <RootNamespace>UnrealScriptDebugger</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>LE2KismetLogger</ProjectName>
+    <ProjectName>UnrealScriptDebugger</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -47,12 +47,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.asi</TargetExt>
-    <TargetName>LE2KismetLogger</TargetName>
+    <TargetName>UnrealScriptDebugger</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.asi</TargetExt>
-    <TargetName>LE2KismetLogger</TargetName>
+    <TargetName>UnrealScriptDebugger</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -63,6 +63,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -89,15 +90,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="KismetLogger.cpp" />
+    <ClCompile Include="BreakPointContainer.cpp" />
+    <ClCompile Include="UnrealscriptDebugger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LE2-SDK\LE2-SDK.vcxproj">
-      <Project>{8da34ede-7d5c-4da3-8841-78ab05e8c6d2}</Project>
+      <Project>{e8071203-085e-4b90-9c5c-39d546ed6fe2}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="cpp.hint" />
+    <ClInclude Include="BreakPointContainer.h" />
+    <ClInclude Include="UnrealScriptDefinitions.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -196,7 +196,12 @@ bool UObject::IsA ( UClass* pClass )
 	} 
 
 	return false; 
-} 
+}
+
+template<typename T>
+bool IsA(UObject* object) {
+	return object->IsA(T::StaticClass());
+}
 
 /*
 # ========================================================================================= #
