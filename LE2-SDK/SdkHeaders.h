@@ -264,7 +264,7 @@ struct FObjectExport : public FObjectResource
 #include "SDK_HEADERS\Core_structs.h"
 #include "SDK_HEADERS\Core_classes.h"
 #include "SDK_HEADERS\Core_f_structs.h"
-#include "SDK_HEADERS\Core_functions.cpp"
+//#include "SDK_HEADERS\Core_functions.cpp"
 #include "SDK_HEADERS\Engine_structs.h"
 #include "SDK_HEADERS\Engine_classes.h"
 #include "SDK_HEADERS\Engine_f_structs.h"

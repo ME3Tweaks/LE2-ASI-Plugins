@@ -575,6 +575,11 @@ public:
 	virtual void ProcessEvent ( class UFunction* pFunction, void* pParms, void* pResult = NULL );				// 0x7FF67E818D50 (0x240)
 };
 
+template<typename T>
+bool IsA(UObject* object) {
+	return object->IsA(T::StaticClass());
+}
+
 // Class Core.TextBuffer
 // 0x002C (0x008C - 0x0060)
 class UTextBuffer : public UObject
