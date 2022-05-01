@@ -13,10 +13,21 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2KismetLogger", "LE2Kisme
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2DebugLogger", "LE2DebugLogger\LE2DebugLogger.vcxproj", "{D56CAF33-BA78-4541-98EE-02BCD192EECF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7F45825C-9039-4117-93E5-3F8D7D5F4FA8} = {7F45825C-9039-4117-93E5-3F8D7D5F4FA8}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2PNGScreenShots", "LE2PNGScreenshots\LE2PNGScreenshots.vcxproj", "{8298E95F-CC4D-440D-B9E6-7B7BC0DF2FE5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnrealScriptDebugger", "UnrealScriptDebugger\UnrealScriptDebugger.vcxproj", "{6172080A-0E24-4B92-9157-5ADBB34C0DA8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7F45825C-9039-4117-93E5-3F8D7D5F4FA8} = {7F45825C-9039-4117-93E5-3F8D7D5F4FA8}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2LinkerPrinter", "LE2LinkerPrinter\LE2LinkerPrinter.vcxproj", "{8298E95F-DEAD-440D-B9E6-7B7BC0DF2FE4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7F45825C-9039-4117-93E5-3F8D7D5F4FA8} = {7F45825C-9039-4117-93E5-3F8D7D5F4FA8}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -68,6 +79,14 @@ Global
 		{6172080A-0E24-4B92-9157-5ADBB34C0DA8}.Release|x64.Build.0 = Release|x64
 		{6172080A-0E24-4B92-9157-5ADBB34C0DA8}.Release|x86.ActiveCfg = Release|x64
 		{6172080A-0E24-4B92-9157-5ADBB34C0DA8}.Release|x86.Build.0 = Release|x64
+		{8298E95F-DEAD-440D-B9E6-7B7BC0DF2FE4}.Debug|x64.ActiveCfg = Debug|x64
+		{8298E95F-DEAD-440D-B9E6-7B7BC0DF2FE4}.Debug|x64.Build.0 = Debug|x64
+		{8298E95F-DEAD-440D-B9E6-7B7BC0DF2FE4}.Debug|x86.ActiveCfg = Debug|x64
+		{8298E95F-DEAD-440D-B9E6-7B7BC0DF2FE4}.Debug|x86.Build.0 = Debug|x64
+		{8298E95F-DEAD-440D-B9E6-7B7BC0DF2FE4}.Release|x64.ActiveCfg = Release|x64
+		{8298E95F-DEAD-440D-B9E6-7B7BC0DF2FE4}.Release|x64.Build.0 = Release|x64
+		{8298E95F-DEAD-440D-B9E6-7B7BC0DF2FE4}.Release|x86.ActiveCfg = Release|x64
+		{8298E95F-DEAD-440D-B9E6-7B7BC0DF2FE4}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

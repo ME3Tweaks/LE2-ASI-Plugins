@@ -13,10 +13,10 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{D56CAF33-BA78-4541-98EE-02BCD192EECF}</ProjectGuid>
-    <RootNamespace>SeqActLog Enabler</RootNamespace>
+    <ProjectGuid>{8298E95F-DEAD-440D-B9E6-7B7BC0DF2FE4}</ProjectGuid>
+    <RootNamespace>LinkerPrinter</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>LE2DebugLogger</ProjectName>
+    <ProjectName>LE2LinkerPrinter</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -47,12 +47,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.asi</TargetExt>
-    <TargetName>LE2DebugLogger</TargetName>
+    <TargetName>LE2LinkerPrinter</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.asi</TargetExt>
-    <TargetName>LE2DebugLogger</TargetName>
+    <TargetName>LE2LinkerPrinter</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -63,7 +63,6 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -90,15 +89,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DebugLogger.cpp" />
+    <ClCompile Include="LE2LinkerPrinter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LE2-SDK\LE2-SDK.vcxproj">
-      <Project>{8da34ede-7d5c-4da3-8841-78ab05e8c6d2}</Project>
+      <Project>{e8071203-085e-4b90-9c5c-39d546ed6fe2}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="HookPrototypes.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
