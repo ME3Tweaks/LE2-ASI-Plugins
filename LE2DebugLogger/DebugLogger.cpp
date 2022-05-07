@@ -7,12 +7,7 @@
 #include <stack>
 #include <thread>
 
-#include "../LE2-SDK/Interface.h"
-#include "../LE2-SDK/Common.h"
-#include "../LE2-SDK/ME3TweaksHeader.h"
 #include "HookPrototypes.h"
-
-#define MYHOOK "DebugLogger_"
 
 SPI_PLUGINSIDE_SUPPORT(L"DebugLogger", L"2.0.0", L"ME3Tweaks", SPI_GAME_LE2, SPI_VERSION_LATEST);
 SPI_PLUGINSIDE_PRELOAD;
@@ -87,6 +82,7 @@ UObject* CreateImport_hook(ULinkerLoad* Context, int i)
 		auto filename = Context->Filename.Data;
 
 		// Filter out startup files because they generate tons of imports that developers will never care about.
+		// Also makes game startup much slower
 		if (wcsstr(filename, L"\\Startup_00_Shared") > 0
 			|| wcsstr(filename, L"\\Startup_DLC_UNC_Moment01") > 0
 			|| wcsstr(filename, L"\\Startup_HEN_VT") > 0
@@ -126,51 +122,40 @@ UObject* CreateImport_hook(ULinkerLoad* Context, int i)
 	return object;
 }
 
-///===============================
-/// METHOD IMPLEMENTATIONS
-///===============================
-void LogF_hook(void* fOutputDevice, wchar_t* formatStr, void* param1, void* param2)
+// Logs a message from a source
+void logMessage(const wchar_t* logSource, wchar_t* formatStr, void* param1, void* param2)
 {
-	fwprintf_s(stdout, L"appLogf: ");
+	// Todo: Log to disk.
+	fwprintf_s(stdout, L"%s: ", logSource);
 	fwprintf_s(stdout, formatStr, param1, param2);
 	fwprintf_s(stdout, L"\n");
 }
 
-void MsgF_hook(void* fOutputDevice, wchar_t* formatStr, wchar_t* param1)
+#pragma region FOutputDevice::Logf
+void FOutputDeviceLogf_hook(void* fOutputDevice, int* code, wchar_t* formatStr, void* param1)
 {
-	fwprintf_s(stdout, L"appMsgf: ");
-	fwprintf_s(stdout, formatStr, param1);
-	fwprintf_s(stdout, L"\n");
+	logMessage(L"appLogf", formatStr, param1, param1);
 }
+
+#pragma endregion FOutputDevice::Logf
+
+#pragma region FErrorOutputDevice::Logf
+void FErrorOutputDeviceLogf_hook(void* outputDevice, wchar_t* formatStr, void* param1, void* param2)
+{
+	logMessage(L"appErrorLogf", formatStr, param1, param2);
+}
+
+#pragma endrgion FErrorOutputDevice::Logf
 
 void MsgFDialog_hook(int messageBoxType, wchar_t* formatStr, wchar_t* param1)
 {
 	MessageBoxW(NULL, formatStr, L"Game message", 0x0);
 }
 
-typedef void (*tCombineFromBuffer)(UObject* Context, wchar_t* filePath, FString* contents, int bRefreshContents);
-tCombineFromBuffer FConfigCombineFromBuffer = nullptr;
-tCombineFromBuffer FConfigCombineFromBuffer_orig = nullptr;
-void FConfigCombineFromBuffer_hook(UObject* Context, wchar_t* filePath, FString* contents, int bRefreshContents)
-{
-	writeln("FConfig::CombineFromBuffer: %s, bRefreshContents: %i", filePath, bRefreshContents);
-	FConfigCombineFromBuffer_orig(Context, filePath, contents, bRefreshContents);
-	//FConfigCombineFromBuffer_orig(Context, filePath, contents, 0);
-}
 
 #pragma region LogInternal
-struct LE2FFrameHACK
-{
-	void* vtable; // 0x0
-	int unknown[3];
-	UStruct* Node;
-	UObject* Object;
-	BYTE* Code;
-	// No idea what this other stuff is
-};
 
-typedef void (*tNativeFunction) (UObject* Context, LE2FFrameHACK* Stack, void* Result);
-tNativeFunction* GNatives = (tNativeFunction*)0x7ff7c76d99b0; // Probably shouldn't hardcode this...
+
 
 typedef void (*tLogInternalNative)(UObject* callingObject, LE2FFrameHACK* param2);
 tLogInternalNative LogInternal = nullptr;
@@ -181,16 +166,6 @@ void LogInternal_hook(UObject* callingObject, LE2FFrameHACK* stackFrame)
 	// 0x28 = Code?
 	// 0x2C = ??
 	// 0x38 = PreviousFrame?
-	auto name = callingObject->GetName();
-	writeln(L"CALLING NATIVE LOGINTERNAL FOR %hs", name);
-	std::this_thread::sleep_for(chrono::seconds(10)); // give time window to attach debugger to running process
-
-	int64 posi = (int64) LogInternal_orig;
-	for(int i = 0; i < 20; i++)
-	{
-		writeln(L"0x%p: %x", posi, *((BYTE*)posi));
-		posi++;
-	}
 
 	BYTE* originalCodePointer = stackFrame->Code;
 	BYTE nativeIndex = *stackFrame->Code++;
@@ -206,128 +181,123 @@ void LogInternal_hook(UObject* callingObject, LE2FFrameHACK* stackFrame)
 
 #pragma endregion LogInternal
 
+#pragma region PackageLoading
 
-// ======================================
-// LOGGING HOOKS
-// ======================================
-bool hookLoggingFunc(ISharedProxyInterface* InterfacePtr)
+void LoadPackagePersistent_hook(int64 param1, const wchar_t* packageName, uint32 param3, int64* param4, uint32* param5)
 {
-	// ============================================================
-	// appLogF
-	//=============================================================
-	INIT_FIND_PATTERN_POSTHOOK(LogF,/*48 8b c4 48 89*/ "50 10 4c 89 40 18 4c 89 48 20 56 48 83 ec 50 83 79 08 00 48 8b f1 0f 85 bf 00 00 00");
-	INIT_HOOK_PATTERN(LogF)
-
-		/*
-			writeln(L"Initializing appLogf hook...");
-		if (auto const rc = InterfacePtr->FindPattern(reinterpret_cast<void**>(&LogF), "48 8b c4 48 89 50 10 4c 89 40 18 4c 89 48 20 56 48 83 ec 50 83 79 08 00 48 8b f1 0f 85 bf 00 00 00");
-			rc != SPIReturn::Success)
-		{
-			writeln(L"Attach - failed to find appLogf pattern: %d / %s", rc, SPIReturnToString(rc));
-			//return false;
-		}
-		else if (auto const rc = InterfacePtr->InstallHook(MYHOOK "appLogf", LogF, LogF_hook, reinterpret_cast<void**>(&LogF_orig));
-			rc != SPIReturn::Success)
-		{
-			writeln(L"Attach - failed to hook appLogf: %d / %s", rc, SPIReturnToString(rc));
-			//return false;
-		}
-		else
-		{
-			writeln(L"Hooked appLogf");
-		}*/
-
-		// ==============================================================
-		// FConfig::CombineFromBuffer
-		// ==============================================================
-
-		INIT_FIND_PATTERN_POSTHOOK(FConfigCombineFromBuffer,/*40 55 56 57 41*/ "54 41 55 41 56 41 57 48 8d ac 24 b0 fe ff ff 48 81 ec 50 02 00 00 48 c7 85 d0 00 00 00 fe ff ff ff 48 89 9c 24 a8 02 00 00 48 8b 05 c3 c4 5f 01 48 33 c4 48 89 85 40 01 00 00");
-		INIT_HOOK_PATTERN(FConfigCombineFromBuffer)
-
-		//writeln(L"Locating FConfig::CombineFromBuffer...");
-		//if (auto const rc = InterfacePtr->FindPattern(reinterpret_cast<void**>(&FConfigCombineFromBuffer), "40 55 56 57 41 54 41 55 41 56 41 57 48 8d ac 24 b0 fe ff ff 48 81 ec 50 02 00 00 48 c7 85 d0 00 00 00 fe ff ff ff 48 89 9c 24 a8 02 00 00 48 8b 05 c3 c4 5f 01 48 33 c4 48 89 85 40 01 00 00");
-		//	rc != SPIReturn::Success)
-		//{
-		//	writeln(L"Failed to find FConfig::CombineFromBuffer pattern: %d / %s", rc, SPIReturnToString(rc));
-		//	//return false;
-		//}
-		//else if (auto const rc = InterfacePtr->InstallHook(MYHOOK "FConfigCombineFromBuffer", FConfigCombineFromBuffer, FConfigCombineFromBuffer_hook, reinterpret_cast<void**>(&FConfigCombineFromBuffer_orig));
-		//	rc != SPIReturn::Success)
-		//{
-		//	writeln(L"Attach - failed to hook FConfigCombineFromBuffer: %d / %s", rc, SPIReturnToString(rc));
-		//	//return false;
-		//}
-		//else
-		//{
-		//	writeln(L"Hooked FConfigCombineFromBuffer");
-		//}
-
-		return true;
+	writeln("Loading persistent package: %s", packageName);
+	LoadPackagePersistent_orig(param1, packageName, param3, param4, param5);
 }
 
-// This only works for printing native addresses
-// Cannot have bink dll hook or it'll fail to bind
+// Returns a UPackage, but we don't have that defined
 
-// A prototype of UFunction::Bind method used to
-// bind UScript functions to native implementations.
-typedef void(__thiscall* tUFunctionBind)(void* pFunction);
-tUFunctionBind UFunctionBind = nullptr;
-tUFunctionBind UFunctionBind_orig = nullptr;
-
-set<void*> nativeSet;
-
-void HookedUFunctionBind(UFunction* functionObj)
+void* LoadPackage_hook(void* param1, wchar_t* packageName, uint32 param3)
 {
-	UFunctionBind_orig(functionObj);
-	if (functionObj->FunctionFlags & 0x400) { // NATIVE
-		auto retVal = nativeSet.insert(functionObj->Func);
-		if (retVal.second) {
-			// Not really sure how to get the parent name...
-			auto name = functionObj->GetFullName();
-			auto finalAddr = (unsigned long long)functionObj->Func;
-			writeln(L"%hs = 0x%p", name, finalAddr);
-			logger.writeToLog(string_format("%s = 0x%p", name, finalAddr), false, true);
-		}
+	// FindPackageFile doesn't seem to work. Might need to figure out what parameters it really needs.
+	// The below commented out code crashes the game
+
+	/*std::this_thread::sleep_for(std::chrono::seconds(8));
+	FString outName;
+	wchar_t* language = L"";
+	auto pFound = GPackageFileCache->FindPackageFile(param2, nullptr, outName, language, false);
+	if (pFound)
+	{
+		writeln("Loading package synchronously: %s", outName.Data);
 	}
 	else
 	{
-		//writeln(L"NOT NATIVE: %hs", functionObj->GetFullName());
-	}
+		writeln("Loading package synchronously: %s", param2);
+	}*/
+
+	writeln("Loading package synchronously: %s", packageName);
+	return LoadPackage_orig(param1, packageName, param3);
 }
+
+
+uint32 LoadPackageAsyncTick_hook(UnLinker* linker, int a2, float a3)
+{
+	auto result = LoadPackageAsyncTick_orig(linker, a2, a3);
+	writeln("Loading package asynchronously: %s, %f%%", linker->PackageName, linker->EstimatedLoadPercentage);
+	return result;
+}
+
+
+void LinkerLoadPreload_hook(UnLinker* linker, UObject* objectToLoad)
+{
+
+	// This prints out pretty much everything that loads
+	// Not sure how to properly hook on preload here
+
+	// This is used when loading the ref shader cache file, the game seems to actually be doing a
+	// seek free load on the CacheObject, which loads the file via preload
+	//auto fullPath = objectToLoad->GetFullPath();
+	////if (isPartOf(fullPath, "CacheObject"))
+	////{
+	//	//std::this_thread::sleep_for(std::chrono::seconds(8));
+
+	//	// I took this right out of Ghidra, cause I don't want to deal with a FQWORD (Isn't this just a int64?)
+	//int64* objectFlags = (int64*)((int64)objectToLoad + 0xC);
+	//if ((*objectFlags & 0x20000000000) != 0) {
+
+	//	// Object needs loaded, so the file is going to be loaded.
+	//	writeln("SeekFreeLoading object: %hs", objectToLoad->GetFullPath());
+	//}
+	////}
+	LinkerLoadPreload_orig(linker, objectToLoad);
+}
+
+
+#pragma endregion PackageLoading
+
+// Hooks logging functions
+bool hookLoggingFunctions(ISharedProxyInterface* InterfacePtr)
+{
+	// Allows logging LogInternal() calls (even user ones)
+	INIT_FIND_PATTERN_POSTHOOK(LogInternal, /*"40 57 48 83 ec */"40 48 c7 44 24 20 fe ff ff ff 48 89 5c 24 50 48 89 74 24 60 48 8b da 33 f6 48 89 74 24 28 48 89 74 24 30");
+	INIT_HOOK_PATTERN(LogInternal);
+
+	// WarnInternal seems like it prints to the debug output so I don't think it needs hooked
+	// appAssertFailed writes to debug output
+
+	INIT_FIND_PATTERN_POSTHOOK(FOutputDeviceLogf, /*48 8b c4 48 89*/ "50 10 4c 89 40 18 4c 89 48 20 56 48 83 ec 50 83 79 08 00 48 8b f1 0f 85 bf 00 00 00");
+	INIT_HOOK_PATTERN(FOutputDeviceLogf);
+
+	INIT_FIND_PATTERN_POSTHOOK(FErrorOutputDeviceLogf, /*"48 8b c4 48 89*/ "50 10 4c 89 40 18 4c 89 48 20 56 48 83 ec 50 83 79 08 00 48 8b f1");
+	INIT_HOOK_PATTERN(FErrorOutputDeviceLogf);
+}
+
 
 SPI_IMPLEMENT_ATTACH
 {
 	Common::OpenConsole();
 
-	// This is only for printing out the natives addresses
-	//writeln(L"Initializing UFunction::Bind hook...");
-	//if (auto const rc = InterfacePtr->FindPattern(reinterpret_cast<void**>(&UFunctionBind), "48 8B C4 55 41 56 41 57 48 8D A8 78 F8 FF FF 48 81 EC 70 08 00 00 48 C7 44 24 50 FE FF FF FF 48 89 58 10 48 89 70 18 48 89 78 20 48 8B ?? ?? ?? ?? ?? 48 33 C4 48 89 85 60 07 00 00 48 8B F1 E8 ?? ?? ?? ?? 48 8B F8 F7 86");
-	//	rc != SPIReturn::Success)
-	//{
-	//	writeln(L"Attach - failed to find UFunction::Bind pattern: %d / %s", rc, SPIReturnToString(rc));
-	//	return false;
-	//}
-	//if (auto const rc = InterfacePtr->InstallHook(MYHOOK "UFunction::Bind", UFunctionBind, HookedUFunctionBind, reinterpret_cast<void**>(&UFunctionBind_orig));
-	//	rc != SPIReturn::Success)
-	//{
-	//	writeln(L"Attach - failed to hook UFunction::Bind: %d / %s", rc, SPIReturnToString(rc));
-	//	return false;
-	//}
-	//writeln(L"Hooked UFunction::Bind");
-	//return true;
+	writeln(L"Initializing DebugLogger...");
+	INIT_CHECK_SDK();
 
+	LoadCommonClassPointers(InterfacePtr);
 
+	// Log debug output messages
 	INIT_HOOK_PATTERN(OutputDebugStringW)
 
-	auto _ = SDKInitializer::Instance();
+	// CreateImport
 	INIT_FIND_PATTERN_POSTHOOK(CreateImport, /*48 8b c4 55 41*/ "54 41 55 41 56 41 57 48 8b ec 48 83 ec 70 48 c7 45 d0 fe ff ff ff 48 89 58 10 48 89 70 18 48 89 78 20 4c 63 e2");
 	INIT_HOOK_PATTERN(CreateImport);
 
-	// RESEARCHING...
-	INIT_FIND_PATTERN_POSTHOOK(LogInternal, /*40 57 48 83 ec*/ "40 48 c7 44 24 20 fe ff ff ff 48 89 5c 24 50 48 89 74 24 60 48 8b da 33 f6 48 89 74 24 28");
-	INIT_HOOK_PATTERN(LogInternal);
+	// FIX ADDR
+	// OBJECT PRELOAD (called on every object in a package file, can be used for seekfree)
+	//INIT_FIND_PATTERN_POSTHOOK(LinkerLoadPreload, /*"40 55 56 57 41*/ "54 41 55 41 56 41 57 48 8d 6c 24 d9 48 81 ec 90 00 00 00 48 c7 45 e7 fe ff ff ff");
+	//INIT_HOOK_PATTERN(LinkerLoadPreload);
 
-	hookLoggingFunc(InterfacePtr);
+	// SYNC LOAD PACKAGE
+	INIT_FIND_PATTERN_POSTHOOK(LoadPackage, /*"48 8b c4 44 89*/"40 18 48 89 48 08 53 56 57 41 56 41 57 48 83 ec 50 48 c7 40 b8 fe ff ff ff");
+	INIT_HOOK_PATTERN(LoadPackage);
+
+	// ASYNC LOAD PACKAGE
+	INIT_FIND_PATTERN_POSTHOOK(LoadPackageAsyncTick, /*"48 8b c4 55 56*/ "57 41 54 41 55 41 56 41 57 48 8d 68 a1 48 81 ec b0 00 00 00");
+	INIT_HOOK_PATTERN(LoadPackageAsyncTick);
+
+	// Logging functions to hook up for writing to disk
+	hookLoggingFunctions(InterfacePtr);
 	return true;
 }
 
