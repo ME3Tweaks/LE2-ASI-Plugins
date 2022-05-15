@@ -297,6 +297,7 @@ UObject* StaticAllocateObject_hook(
 		// This has to be in a different function since it needs unwound and
 		// that can't be done in __try __except
 		logAllocationFailure(instancingClass, outer, objClassName, loadFlags, archetype);
+		std::this_thread::sleep_for(chrono::seconds(8));
 		exit(1);
 	}
 }
