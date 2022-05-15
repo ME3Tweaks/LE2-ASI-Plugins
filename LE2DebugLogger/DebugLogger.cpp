@@ -13,7 +13,7 @@ SPI_PLUGINSIDE_SUPPORT(L"DebugLogger", L"2.0.0", L"ME3Tweaks", SPI_GAME_LE2, SPI
 SPI_PLUGINSIDE_PRELOAD;
 SPI_PLUGINSIDE_SEQATTACH;
 
-ME3TweaksASILogger logger("DebugLogger v2", "DebugLogger.txt");
+ME3TweaksASILogger logger("DebugLogger v2", "LE2DebugLogger.log");
 
 // ===========================
 // Debug output from game
