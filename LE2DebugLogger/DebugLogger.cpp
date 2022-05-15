@@ -9,11 +9,11 @@
 
 #include "HookPrototypes.h"
 
-SPI_PLUGINSIDE_SUPPORT(L"DebugLogger", L"2.0.0", L"ME3Tweaks", SPI_GAME_LE2, SPI_VERSION_LATEST);
+SPI_PLUGINSIDE_SUPPORT(L"DebugLogger", L"3.0.0", L"ME3Tweaks", SPI_GAME_LE2, SPI_VERSION_LATEST);
 SPI_PLUGINSIDE_PRELOAD;
 SPI_PLUGINSIDE_SEQATTACH;
 
-ME3TweaksASILogger logger("DebugLogger v2", "LE2DebugLogger.log");
+ME3TweaksASILogger logger("DebugLogger v3", "LE2DebugLogger.log");
 
 // ===========================
 // Debug output from game
