@@ -23,8 +23,8 @@ tOutputDebugStringW OutputDebugStringW_orig = nullptr;
 void WINAPI OutputDebugStringW_hook(LPCWSTR lpcszString)
 {
 	OutputDebugStringW_orig(lpcszString);
-	writeMsg(L"%s", lpcszString); // string already has a newline on the end
-	logger.writeWideToLog(std::wstring_view{ lpcszString });
+	//writeMsg(L"%s", lpcszString); // string already has a newline on the end
+	logger.writeToLog(std::wstring_view{ lpcszString }.data(), true);
 	logger.flush();
 }
 
@@ -115,8 +115,7 @@ UObject* CreateImport_hook(ULinkerLoad* Context, int i)
 		}
 
 		FObjectImport importEntry = Context->ImportMap(i);
-		writeln("Could not resolve import #%d: %hs (%hs) in file: %s", -i - 1, GetFullImportName(Context, importEntry), importEntry.ClassName.GetName(), Context->Filename.Data);
-		logger.writeWideLineToLog(wstring_format(L"Could not resolve #%d: %hs (%hs) in file: %s", -i - 1, GetFullImportName(Context, importEntry), importEntry.ClassName.GetName(), filename));
+		logger.writeToLog(wstring_format(L"Could not resolve #%d: %hs (%hs) in file: %s", -i - 1, importEntry.ObjectName.GetName(), importEntry.ClassName.GetName(), Context->Filename.Data), true);
 		logger.flush();
 	}
 	return object;
@@ -125,10 +124,9 @@ UObject* CreateImport_hook(ULinkerLoad* Context, int i)
 // Logs a message from a source
 void logMessage(const wchar_t* logSource, wchar_t* formatStr, void* param1, void* param2)
 {
-	// Todo: Log to disk.
-	fwprintf_s(stdout, L"%s: ", logSource);
-	fwprintf_s(stdout, formatStr, param1, param2);
-	fwprintf_s(stdout, L"\n");
+	// We have to prepare the formatting string since it's an inbound parameter
+	auto preString = wstring_format(L"%s: %s", logSource, formatStr);
+	logger.writeToLog(wstring_format(preString.data(), param1, param2), true, true);
 }
 
 #pragma region FOutputDevice::Logf
@@ -154,12 +152,6 @@ void MsgFDialog_hook(int messageBoxType, wchar_t* formatStr, wchar_t* param1)
 
 
 #pragma region LogInternal
-
-
-
-typedef void (*tLogInternalNative)(UObject* callingObject, LE2FFrameHACK* param2);
-tLogInternalNative LogInternal = nullptr;
-tLogInternalNative LogInternal_orig = nullptr;
 void LogInternal_hook(UObject* callingObject, LE2FFrameHACK* stackFrame)
 {
 	// 0x20 = Object?
@@ -172,7 +164,9 @@ void LogInternal_hook(UObject* callingObject, LE2FFrameHACK* stackFrame)
 	FString stringArg;
 	UObject* sfObject = stackFrame->Object;
 	GNatives[nativeIndex](sfObject, (LE2FFrameHACK*)stackFrame, &stringArg);
-	writeln(L"LogInternal() from %hs: %s", callingObject->GetFullName(), stringArg.Data);
+
+	// Kinda jank way to re-use this code by making it create a string a certain way
+	logMessage(L"LogInternal() from %hs", L"%s", callingObject->GetFullName(), stringArg.Data);
 
 	//restore the code pointer so LogInternal executes normally.
 	stackFrame->Code = originalCodePointer;
@@ -209,15 +203,17 @@ void* LoadPackage_hook(void* param1, wchar_t* packageName, uint32 param3)
 		writeln("Loading package synchronously: %s", param2);
 	}*/
 
-	writeln("Loading package synchronously: %s", packageName);
+	logger.writeToLog(wstring_format(L"Loading package synchronously: %s\n", packageName), true);
 	return LoadPackage_orig(param1, packageName, param3);
 }
 
 
 uint32 LoadPackageAsyncTick_hook(UnLinker* linker, int a2, float a3)
 {
+	// Logger writes after the call cause linker might be null to start with, it's populated when tick begins
 	auto result = LoadPackageAsyncTick_orig(linker, a2, a3);
-	writeln("Loading package asynchronously: %s, %f%%", linker->PackageName, linker->EstimatedLoadPercentage);
+	logger.writeToLog(wstring_format(L"Loading package asynchronously: %s, %f%%\n", linker->PackageName, linker->EstimatedLoadPercentage), true);
+	// writeln("Loading package asynchronously: %s, %f%%", linker->PackageName, linker->EstimatedLoadPercentage);
 	return result;
 }
 
@@ -266,6 +262,45 @@ bool hookLoggingFunctions(ISharedProxyInterface* InterfacePtr)
 	INIT_HOOK_PATTERN(FErrorOutputDeviceLogf);
 }
 
+void logAllocationFailure(UClass* instancingClass, UObject* outer, FName objClassName, long long loadFlags, UObject* archetype) {
+	char* instancingClassName = instancingClass ? instancingClass->GetFullName() : nullptr;
+	char* outerName = outer ? outer->GetFullName() : nullptr;
+	char* objectName = objClassName.Instanced();
+	char* archetypeName = archetype ? archetype->GetFullName() : nullptr;
+	logger.writeToLog(L"ERROR ALLOCATING OBJECT! Some information that may help track down the problem:\n", true);
+	logger.writeToLog(wstring_format(L"\tInstancing class name: %hs\n", instancingClassName), true);
+	logger.writeToLog(wstring_format(L"\tOuter ('Link' in modding tools): %hs\n", outerName), true);
+	logger.writeToLog(wstring_format(L"\tName of object being created: %hs\n", objectName), true);
+	logger.writeToLog(wstring_format(L"\tArchetype: %hs\n", archetypeName), true);
+
+	logger.writeToLog(L"DebugLogger: Terminating application due to crash in StaticAllocateObject(). See the DebugLogger log file.\n", true);
+}
+
+UObject* StaticAllocateObject_hook(
+	UClass* instancingClass,
+	UObject* outer,
+	FName objClassName,
+	long long loadFlags,
+	UObject* archetype,
+	void* errorDev, // FOutputDevice
+	const wchar_t* a7, // Ghidra shows this is pretty commonly 0
+	void* instancePtr, // Ghidra shows this is pretty commonly 0
+	void* a9) // Ghidra shows this is pretty commonly 0
+{
+	__try {
+		return StaticAllocateObject_orig(instancingClass, outer, objClassName, loadFlags, archetype, errorDev, a7, instancePtr, a9);
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		// We failed to allocate an object
+		// Game's gonna die. Let's log it
+
+		// This has to be in a different function since it needs unwound and
+		// that can't be done in __try __except
+		logAllocationFailure(instancingClass, outer, objClassName, loadFlags, archetype);
+		exit(1);
+	}
+}
+
 
 SPI_IMPLEMENT_ATTACH
 {
@@ -277,7 +312,7 @@ SPI_IMPLEMENT_ATTACH
 	LoadCommonClassPointers(InterfacePtr);
 
 	// Log debug output messages
-	INIT_HOOK_PATTERN(OutputDebugStringW)
+	INIT_HOOK_PATTERN(OutputDebugStringW);
 
 	// CreateImport
 	INIT_FIND_PATTERN_POSTHOOK(CreateImport, /*48 8b c4 55 41*/ "54 41 55 41 56 41 57 48 8b ec 48 83 ec 70 48 c7 45 d0 fe ff ff ff 48 89 58 10 48 89 70 18 48 89 78 20 4c 63 e2");
@@ -295,6 +330,12 @@ SPI_IMPLEMENT_ATTACH
 	// ASYNC LOAD PACKAGE
 	INIT_FIND_PATTERN_POSTHOOK(LoadPackageAsyncTick, /*"48 8b c4 55 56*/ "57 41 54 41 55 41 56 41 57 48 8d 68 a1 48 81 ec b0 00 00 00");
 	INIT_HOOK_PATTERN(LoadPackageAsyncTick);
+
+	// When object instances are allocated, if there's an error
+	// the game dies. This logs which object was being created
+	// that the game died on
+	INIT_FIND_PATTERN_POSTHOOK(StaticAllocateObject, /*"4c 89 44 24 18*/ "55 56 57 41 54 41 55 41 56 41 57 48 8d ac 24 80 fb ff ff 48 81 ec 80 05 00 00");
+	INIT_HOOK_PATTERN(StaticAllocateObject);
 
 	// Logging functions to hook up for writing to disk
 	hookLoggingFunctions(InterfacePtr);

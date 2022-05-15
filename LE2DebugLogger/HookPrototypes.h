@@ -250,6 +250,10 @@ typedef UObject* (*tLoadPackagePersistent)(int64 param1, const wchar_t* param2, 
 tLoadPackagePersistent LoadPackagePersistent = nullptr;
 tLoadPackagePersistent LoadPackagePersistent_orig = nullptr;
 
+typedef void (*tLogInternalNative)(UObject* callingObject, LE2FFrameHACK* param2);
+tLogInternalNative LogInternal = nullptr;
+tLogInternalNative LogInternal_orig = nullptr;
+
 // MISC THINGS
 // ==========================================
 
@@ -262,3 +266,19 @@ tRegisterTFC RegisterTFC_orig = nullptr;
 typedef void (*tFindFiles)(void* classPtr, TArray<wchar_t>* outFiles, wchar_t* searchPattern, bool files, bool directories, int flagSet);
 tFindFiles FindFiles = nullptr;
 tFindFiles FindFiles_orig = nullptr;
+
+// DebugLogger stuff for devs
+// ==========================================
+typedef UObject* (*tStaticAllocateObject)(
+    UClass* objectClass, // What class of object is being instantiated?
+    UObject* inObject, // The 'Outer' of the object will be set to this 
+    FName a3, // Name of object?
+    long long loadFlags,
+    void* a5, // often 0
+    void* errorDevice, //Often GError
+    const wchar_t* a7, // Often 0
+    void* a8, // Often 0
+    void* a9); // Often 0
+tStaticAllocateObject StaticAllocateObject = nullptr;
+tStaticAllocateObject StaticAllocateObject_orig = nullptr;
+
