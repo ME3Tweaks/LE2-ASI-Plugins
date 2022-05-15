@@ -115,7 +115,7 @@ UObject* CreateImport_hook(ULinkerLoad* Context, int i)
 		}
 
 		FObjectImport importEntry = Context->ImportMap(i);
-		logger.writeToLog(wstring_format(L"Could not resolve #%d: %hs (%hs) in file: %s", -i - 1, importEntry.ObjectName.GetName(), importEntry.ClassName.GetName(), Context->Filename.Data), true);
+		logger.writeToLog(wstring_format(L"Could not resolve #%d: %hs (%hs) in file: %s\n", -i - 1, importEntry.ObjectName.GetName(), importEntry.ClassName.GetName(), Context->Filename.Data), true);
 		logger.flush();
 	}
 	return object;
