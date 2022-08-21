@@ -101,7 +101,7 @@ struct PackedIndex
 	DWORD Bits : 3;
 };
 
-#pragma pack(1)
+#pragma pack(push, 1)
 struct FNameEntry
 {
 	PackedIndex Index;
@@ -109,7 +109,6 @@ struct FNameEntry
 	char AnsiName[1];
 };
 
-#pragma pack(1)
 struct FName
 {
 	DWORD Offset : 29;
@@ -435,3 +434,5 @@ struct FObjectExport : public FObjectResource
 #include "SDK_HEADERS\SFXGameContentDLC_UPD_Patch03_classes.h"
 #include "SDK_HEADERS\SFXGameContentDLC_UPD_Patch03_f_structs.h"
 // #include "SDK_HEADERS\SFXGameContentDLC_UPD_Patch03_functions.cpp"
+
+#pragma pack(pop)

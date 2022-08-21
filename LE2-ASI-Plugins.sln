@@ -31,6 +31,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2LinkerPrinter", "LE2Link
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2SeqAct_LogEnabler", "LE2SeqAct_LogEnabler\LE2SeqAct_LogEnabler.vcxproj", "{C07CE6A9-F5DC-4C05-8AA5-C35BB5F1D27C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LE2ConsoleExtension", "LE2ConsoleExtension\LE2ConsoleExtension.vcxproj", "{FD19784F-65ED-4C58-8922-CADF252A19FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -97,6 +99,14 @@ Global
 		{C07CE6A9-F5DC-4C05-8AA5-C35BB5F1D27C}.Release|x64.Build.0 = Release|x64
 		{C07CE6A9-F5DC-4C05-8AA5-C35BB5F1D27C}.Release|x86.ActiveCfg = Release|Win32
 		{C07CE6A9-F5DC-4C05-8AA5-C35BB5F1D27C}.Release|x86.Build.0 = Release|Win32
+		{FD19784F-65ED-4C58-8922-CADF252A19FC}.Debug|x64.ActiveCfg = Debug|x64
+		{FD19784F-65ED-4C58-8922-CADF252A19FC}.Debug|x64.Build.0 = Debug|x64
+		{FD19784F-65ED-4C58-8922-CADF252A19FC}.Debug|x86.ActiveCfg = Debug|x64
+		{FD19784F-65ED-4C58-8922-CADF252A19FC}.Debug|x86.Build.0 = Debug|x64
+		{FD19784F-65ED-4C58-8922-CADF252A19FC}.Release|x64.ActiveCfg = Release|x64
+		{FD19784F-65ED-4C58-8922-CADF252A19FC}.Release|x64.Build.0 = Release|x64
+		{FD19784F-65ED-4C58-8922-CADF252A19FC}.Release|x86.ActiveCfg = Release|x64
+		{FD19784F-65ED-4C58-8922-CADF252A19FC}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
