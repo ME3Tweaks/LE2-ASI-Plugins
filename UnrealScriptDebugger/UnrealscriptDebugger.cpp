@@ -1,9 +1,7 @@
-//#define GAME_LE1
-#define GAME_LE2
-//#define GAME_LE3
+//#define GAMELE1
+#define GAMELE2
+//#define GAMELE3
 
-
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include <shlwapi.h>
 #include <psapi.h>
 #include <string>
@@ -15,60 +13,26 @@
 
 #include "BreakPointContainer.h"
 
-#if defined GAME_LE1
-#include "../LE1-SDK/Interface.h"
-#include "../LE1-SDK/Common.h"
-#include "../LE1-SDK/ME3TweaksHeader.h"
-#elif defined GAME_LE2
-#include "../LE2-SDK/Interface.h"
-#include "../LE2-SDK/Common.h"
-#include "../LE2-SDK/ME3TweaksHeader.h"
-#elif defined GAME_LE3
-#include "../LE3-SDK/Interface.h"
-#include "../LE3-SDK/Common.h"
-#include "../LE3-SDK/ME3TweaksHeader.h"
-#endif
-
+#include "../../Shared-ASI/Interface.h"
+#include "../../Shared-ASI/Common.h"
+#include "../../Shared-ASI/ME3Tweaks/ME3TweaksHeader.h"
 #include "UnrealScriptDefinitions.h"
+
 #pragma comment(lib, "shlwapi.lib")
 
 #define SLHHOOK "UnrealscriptDebugger_"
 
 
-#if defined GAME_LE1
+#if defined GAMELE1
 #define SPI_GAME SPI_GAME_LE1
-#elif defined GAME_LE2
+#elif defined GAMELE2
 #define SPI_GAME SPI_GAME_LE2
-#elif defined GAME_LE3
+#elif defined GAMELE3
 #define SPI_GAME SPI_GAME_LE3
 #endif
 SPI_PLUGINSIDE_SUPPORT(L"UnrealscriptDebugger", L"SirCxyrtyx", L"2.0.0", SPI_GAME, SPI_VERSION_LATEST);
 SPI_PLUGINSIDE_POSTLOAD;
 SPI_PLUGINSIDE_ASYNCATTACH;
-
-struct OutParmInfo
-{
-	UProperty* Prop;
-	BYTE* PropAddr;
-	OutParmInfo* Next;
-};
-
-struct FFrame
-{
-	void* vtable;
-#if defined GAME_LE1 || defined GAME_LE2
-	int unks[3];
-#elif defined GAME_LE3
-	int unks[4];
-#endif
-	UStruct* Node;
-	UObject* Object;
-	BYTE* Code;
-	BYTE* Locals;
-	FFrame* PreviousFrame;
-	OutParmInfo* OutParms;
-};
-
 
 struct DebuggerFrame
 {
@@ -113,11 +77,11 @@ struct LexMsg
 void SendMsgToLEX(const wstring& wstr, DebuggerFrame* stackFrame = nullptr) {
 	if (const auto handle = FindWindow(nullptr, L"Legendary Explorer"))
 	{
-#if defined GAME_LE1
+#if defined GAMELE1
 		constexpr unsigned long SENT_FROM_DEBUGGER = 0x02AC00D7;
-#elif defined GAME_LE2
+#elif defined GAMELE2
 		constexpr unsigned long SENT_FROM_DEBUGGER = 0x02AC00D8;
-#elif defined GAME_LE3
+#elif defined GAMELE3
 		constexpr unsigned long SENT_FROM_DEBUGGER = 0x02AC00D9;
 #endif
 		LexMsg msg;
@@ -326,11 +290,11 @@ bool AttachDebugger()
 	//}
 
 	BYTE patch[] = { 
-#if defined GAME_LE1
+#if defined GAMELE1
 					0x4c, 0x8d, 0x0d, 0x5c, 0xf2, 0x5a, 0x01, //LEA R9, [GNatives] //load the address of the native function array into the 4th argument register
-#elif defined GAME_LE2
+#elif defined GAMELE2
 					0x4c, 0x8d, 0x0d, 0x1c, 0x08, 0x5d, 0x01, //LEA R9, [GNatives] //load the address of the native function array into the 4th argument register
-#elif defined GAME_LE3
+#elif defined GAMELE3
 #error Specify GNatives address for LE3
 #endif
 					0x4C, 0x8B, 0xC5, //MOV R8, RBP //Move the Result pointer into the 3rd argument register
@@ -370,11 +334,11 @@ bool DetachDebugger()
 	//	//return false;
 	//}
 
-#if defined GAME_LE1
+#if defined GAMELE1
 	const BYTE originalExecutionLoopBytes[] = { 0x4c, 0x8d, 0x35, 0x5c, 0xf2, 0x5a, 0x01, 0x80, 0x38, 0x04, 0x74, 0x30, 0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x48, 0x8b, 0x43, 0x24, 0x4c, 0x8d, 0x44, 0x24, 0x30, 0x48, 0x8b, 0xd3, 0x0f, 0xb6, 0x08, 0x48, 0xff, 0xc0, 0x48, 0x89, 0x43, 0x24, 0x8b, 0xc1, 0x48, 0x8b, 0x4b, 0x1c, 0x41, 0xff, 0x14, 0xc6, 0x48, 0x8b, 0x43, 0x24, 0x80, 0x38, 0x04, 0x75, 0xd7, 0x48, 0xff, 0xc0, 0x4c, 0x8b, 0xc5, 0x48, 0x89, 0x43, 0x24, 0x48, 0x8b, 0xd3, 0x0f, 0xb6, 0x08, 0x48, 0xff, 0xc0, 0x48, 0x89, 0x43, 0x24, 0x8b, 0xc1, 0x48, 0x8b, 0x4b, 0x1c, 0x41, 0xff, 0x14, 0xc6, 0x48, 0x8b, 0x43, 0x24, 0x4c, 0x8b, 0xb4, 0x24, 0x80, 0x00, 0x00, 0x00, 0x80, 0x38, 0x41, 0x75, 0x17, 0x48, 0x8b, 0x4b, 0x1c, 0x48, 0xff, 0xc0, 0x4c, 0x8b, 0xc5, 0x48, 0x89, 0x43, 0x24, 0x48, 0x8b, 0xd3, 0xff, 0x15, 0xe6, 0xf3, 0x5a, 0x01 };
-#elif defined GAME_LE2
+#elif defined GAMELE2
 	const BYTE originalExecutionLoopBytes[] = { 0x4c, 0x8d, 0x35, 0x1c, 0x08, 0x5d, 0x01, 0x80, 0x38, 0x04, 0x74, 0x30, 0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x48, 0x8b, 0x43, 0x24, 0x4c, 0x8d, 0x44, 0x24, 0x30, 0x48, 0x8b, 0xd3, 0x0f, 0xb6, 0x08, 0x48, 0xff, 0xc0, 0x48, 0x89, 0x43, 0x24, 0x8b, 0xc1, 0x48, 0x8b, 0x4b, 0x1c, 0x41, 0xff, 0x14, 0xc6, 0x48, 0x8b, 0x43, 0x24, 0x80, 0x38, 0x04, 0x75, 0xd7, 0x48, 0xff, 0xc0, 0x4c, 0x8b, 0xc5, 0x48, 0x89, 0x43, 0x24, 0x48, 0x8b, 0xd3, 0x0f, 0xb6, 0x08, 0x48, 0xff, 0xc0, 0x48, 0x89, 0x43, 0x24, 0x8b, 0xc1, 0x48, 0x8b, 0x4b, 0x1c, 0x41, 0xff, 0x14, 0xc6, 0x48, 0x8b, 0x43, 0x24, 0x4c, 0x8b, 0xb4, 0x24, 0x80, 0x00, 0x00, 0x00, 0x80, 0x38, 0x41, 0x75, 0x17, 0x48, 0x8b, 0x4b, 0x1c, 0x48, 0xff, 0xc0, 0x4c, 0x8b, 0xc5, 0x48, 0x89, 0x43, 0x24, 0x48, 0x8b, 0xd3, 0xff, 0x15, 0xa6, 0x09, 0x5d, 0x01 };
-#elif defined GAME_LE3
+#elif defined GAMELE3
 #endif
 	
 	return PatchMemory(originalExecutionLoopBytes, sizeof(originalExecutionLoopBytes));
@@ -511,11 +475,11 @@ SPI_IMPLEMENT_ATTACH
 	ProxyInterface = InterfacePtr;
 
 
-#if defined GAME_LE1
+#if defined GAMELE1
 	char* ExecutionLoopPattern = "4c 8d 35 5c f2 5a 01 80 38 04 74 30 0f 1f 80 00 00 00 00";
-#elif defined GAME_LE2
+#elif defined GAMELE2
 	char* ExecutionLoopPattern = "4c 8d 35 1c 08 5d 01 80 38 04 74 30 0f 1f 80 00 00 00 00";
-#elif defined GAME_LE3
+#elif defined GAMELE3
 #endif
 
 	if (const auto rc = InterfacePtr->FindPattern(&ExecutionLoop, ExecutionLoopPattern);
@@ -525,11 +489,11 @@ SPI_IMPLEMENT_ATTACH
 		//return false;
 	}
 
-#if defined GAME_LE1
+#if defined GAMELE1
 	char* GameEngineTickPattern = "48 8b c4 55 53 56 57 41 54 41 56 41 57 48 8d a8 e8 fd ff ff";
-#elif defined GAME_LE2
+#elif defined GAMELE2
 	char* GameEngineTickPattern = "48 8b c4 55 56 57 41 54 41 55 41 56 41 57 48 8d a8 a8 fc ff ff";
-#elif defined GAME_LE3
+#elif defined GAMELE3
 #endif
 
 	if (const auto rc = InterfacePtr->FindPattern(reinterpret_cast<void**>(&GameEngineTick), GameEngineTickPattern);
@@ -568,11 +532,11 @@ SPI_IMPLEMENT_ATTACH
 	}
 
 
-#if defined GAME_LE1
+#if defined GAMELE1
 	auto pipeName = TEXT("\\\\.\\pipe\\LEX_LE1_SCRIPTDEBUG_PIPE");
-#elif defined GAME_LE2
+#elif defined GAMELE2
 	auto pipeName = TEXT("\\\\.\\pipe\\LEX_LE2_SCRIPTDEBUG_PIPE");
-#elif defined GAME_LE3
+#elif defined GAMELE3
 	auto pipeName = TEXT("\\\\.\\pipe\\LEX_LE3_SCRIPTDEBUG_PIPE");
 #endif
 	
