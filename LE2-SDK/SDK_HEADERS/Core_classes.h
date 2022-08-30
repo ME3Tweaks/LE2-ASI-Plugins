@@ -192,7 +192,7 @@ public:
 	char* GetName();
 	char* GetInstancedName();
 	char* GetNameCPP();
-	char* GetFullName();
+	char* GetFullName(bool includeClassName = true);
 	char* GetFullPath();
 
 	template<class T> static T* FindObject (char* ObjectFullName); 

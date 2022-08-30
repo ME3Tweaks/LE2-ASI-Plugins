@@ -93,35 +93,56 @@ char* UObject::GetNameCPP()
 	return cOutBuffer; 
 } 
 
-char* UObject::GetFullName() 
-{ 
-	if ( this->Class && this->Outer ) 
-	{ 
-		static char cOutBuffer[ 256 ]; 
+char* UObject::GetFullName(bool includeClass)
+{
+	if (this->Class && this->Outer)
+	{
+		static char cOutBuffer[256];
 
-		if ( this->Outer->Outer ) 
-		{ 
-			strcpy_s ( cOutBuffer, this->Class->GetName() ); 
-			strcat_s ( cOutBuffer, " " ); 
-			strcat_s ( cOutBuffer, this->Outer->Outer->GetName() ); 
-			strcat_s ( cOutBuffer, "." ); 
-			strcat_s ( cOutBuffer, this->Outer->GetName() ); 
-			strcat_s ( cOutBuffer, "." ); 
-			strcat_s ( cOutBuffer, this->GetName() ); 
-		} 
-		else 
-		{ 
-			strcpy_s ( cOutBuffer, this->Class->GetName() ); 
-			strcat_s ( cOutBuffer, " " ); 
-			strcat_s ( cOutBuffer, this->Outer->GetName() ); 
-			strcat_s ( cOutBuffer, "." ); 
-			strcat_s ( cOutBuffer, this->GetName() ); 
-		} 
+		if (this->Outer->Outer)
+		{
+			if (includeClass) {
+				strcpy_s(cOutBuffer, this->Class->GetName());
+				strcat_s(cOutBuffer, " ");
+				strcat_s(cOutBuffer, this->Outer->Outer->GetInstancedName());
+			}
+			else
+			{
+				strcpy_s(cOutBuffer, this->Outer->Outer->GetInstancedName());
+			}
+			strcat_s(cOutBuffer, ".");
+			strcat_s(cOutBuffer, this->Outer->GetInstancedName());
+			strcat_s(cOutBuffer, ".");
+			strcat_s(cOutBuffer, this->GetInstancedName());
+		}
+		else
+		{
+			if (includeClass) {
+				strcpy_s(cOutBuffer, this->Class->GetName());
+				strcat_s(cOutBuffer, " ");
+				strcat_s(cOutBuffer, this->Outer->GetInstancedName());
+			}
+			else
+			{
+				strcpy_s(cOutBuffer, this->Outer->GetInstancedName());
+			}
+			strcat_s(cOutBuffer, ".");
+			strcat_s(cOutBuffer, this->GetInstancedName());
+		}
 
-		return cOutBuffer; 
-	} 
+		return cOutBuffer;
+	}
 
-	return "(null)"; 
+	// It's a root object, such as a package file itself
+	if (this->Class)
+	{
+		static char cOutBuffer[256];
+		strcpy_s(cOutBuffer, this->Class->GetName());
+		strcat_s(cOutBuffer, " ");
+		strcat_s(cOutBuffer, this->GetName());
+		return cOutBuffer;
+	}
+	return "(null)";
 }
 
 void GetFullPathInternal(UObject* object, char* str)
