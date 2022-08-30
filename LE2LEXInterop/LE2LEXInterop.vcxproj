@@ -10,56 +10,23 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="SdkHeaders.h" />
-    <ClInclude Include="SdkInitializer.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="SDK_HEADERS\BIOC_Materials_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\Core_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\Engine_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\GFxUI_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\IpDrv_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\PlotManagerMap_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\PlotManager_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContentDLC_CER_02_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContentDLC_MCR_03_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContentDLC_PRE_DA_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContentDLC_PRO_Gulp01_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContentDLC_PRO_Pepper01_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContentDLC_PRO_Pepper02_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContentDLC_UNC_01_AreaMap_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContentDLC_UPD_Patch02_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContentDLC_UPD_Patch03_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContent_Bonuses_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContent_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameContent_Inventory_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameDLC_PRE_Cerberus_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameDLC_PRE_Collectors_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameDLC_PRE_General_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGameDLC_PRE_Terminus_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXGame_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXOnlineFoundation_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\SFXQA_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\WinDrv_functions.cpp" />
-    <ClCompile Include="SDK_HEADERS\WwiseAudio_functions.cpp" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{7f45825c-9039-4117-93e5-3f8d7d5f4fa8}</ProjectGuid>
-    <RootNamespace>LE2SDK</RootNamespace>
+    <ProjectGuid>{3E825F49-5D7E-4064-B5B2-03011B408B6F}</ProjectGuid>
+    <RootNamespace>LE2LEXInterop</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>LE2LEXInterop</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -79,26 +46,26 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <TargetExt>.asi</TargetExt>
+    <TargetName>LEXInteropLE2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <TargetExt>.asi</TargetExt>
+    <TargetName>LEXInteropLE2</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GAMELE2;ASI_DEBUG;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>
-      </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <SubSystem>
-      </SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -108,24 +75,35 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GAMELE2;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>
-      </PrecompiledHeaderFile>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <SubSystem>
-      </SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Shared-ASI\LEXInterop\LEXInterop.cpp" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\AdditionalFunctions.h" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\GenericCommands.h" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\InteropActionQueue.h" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\LEAnimViewer.h" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\LELiveLevelEditor.h" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\LEPathfindingGPS.h" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\LEXCommunications.h" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\LEXPipe.h" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\LLEActions.h" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\SharedData.h" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\StaticVariablePointers.h" />
+    <ClInclude Include="..\..\Shared-ASI\LEXInterop\UtilityMethods.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
