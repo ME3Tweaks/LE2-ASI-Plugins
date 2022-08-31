@@ -107,4 +107,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LE2-SDK\LE2-SDK.vcxproj">
+      <Project>{7f45825c-9039-4117-93e5-3f8d7d5f4fa8}</Project>
+    </ProjectReference>
+  </ItemGroup>
 </Project>
