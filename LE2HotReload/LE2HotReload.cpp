@@ -29,7 +29,7 @@ bool PatchMemory(void* address, const void* patch, const SIZE_T patchSize)
 }
 
 void* PatchOffset;
-const BYTE patchData[] = { 0x03 };
+const BYTE patchData[] = { 0x03 }; // Original in 0x1 : READ SHARE (NOT WRITE). 3 is 0x1 | 0x2 which is READ WRITE SHARE
 SPI_IMPLEMENT_ATTACH
 {
 	//Common::OpenConsole();
