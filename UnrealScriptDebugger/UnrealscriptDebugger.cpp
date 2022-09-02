@@ -469,8 +469,7 @@ void ProcessCommand(BYTE* str, DWORD len)
 SPI_IMPLEMENT_ATTACH
 {
 	//Common::OpenConsole();
-
-	auto _ = SDKInitializer::Instance();
+	INIT_CHECK_SDK()
 
 	ProxyInterface = InterfacePtr;
 

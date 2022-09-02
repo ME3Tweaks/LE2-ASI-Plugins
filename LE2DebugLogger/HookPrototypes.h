@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../LE2-SDK/Interface.h"
-#include "../LE2-SDK/Common.h"
-#include "../LE2-SDK/ME3TweaksHeader.h"
+#include "../../Shared-ASI/Interface.h"
+#include "../../Shared-ASI/Common.h"
+#include "../../Shared-ASI/ME3Tweaks//ME3TweaksHeader.h"
 #define MYHOOK "DebugLogger_"
 
 // STRUCTS =====================================================

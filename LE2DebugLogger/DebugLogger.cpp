@@ -1,8 +1,6 @@
 #include <chrono>
-#include <stdio.h>
-#include <io.h>
+#include <cstdio>
 #include <string>
-#include <fstream>
 #include <set>
 #include <stack>
 #include <thread>
