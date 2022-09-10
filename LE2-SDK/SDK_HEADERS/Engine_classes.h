@@ -7001,8 +7001,16 @@ public:
 // 0x0034 (0x025C - 0x0228)
 class ULineBatchComponent : public UPrimitiveComponent
 {
+	struct FPrimitiveDrawInterfaceVTable
+	{
+		void* VirtualFunction_0x00;
+		void* VirtualFunction_0x08;
+		void* VirtualFunction_0x10;
+		void* VirtualFunction_0x18;
+		void (*DrawLine)(void* self, const FVector& start, const FVector& end, const FLinearColor& color, BYTE depth, const float thickness);
+	};
 public:
-	struct FPointer                                    FPrimitiveDrawInterfaceVfTable;                   		// 0x0228 (0x0008) [0x0000000000801002]              ( CPF_Const | CPF_Native | CPF_NoExport )
+	struct FPrimitiveDrawInterfaceVTable*              FPrimitiveDrawInterfaceVfTable;                   		// 0x0228 (0x0008) [0x0000000000801002]              ( CPF_Const | CPF_Native | CPF_NoExport )
 	struct FPointer                                    FPrimitiveDrawInterfaceView;                      		// 0x0230 (0x0008) [0x0000000000801002]              ( CPF_Const | CPF_Native | CPF_NoExport )
 	struct TArray<struct FPointer>                     BatchedLines;                                     		// 0x0238 (0x0010) [0x0000000000003002]              ( CPF_Const | CPF_Native | CPF_Transient )
 	struct TArray<struct FPointer>                     BatchedPoints;                                    		// 0x0248 (0x0010) [0x0000000000003002]              ( CPF_Const | CPF_Native | CPF_Transient )
@@ -11885,7 +11893,10 @@ public:
 class UWorld : public UObject
 {
 public:
-	unsigned char                                      UnknownData00[ 0x34C ];                           		// 0x0060 (0x034C) MISSED OFFSET
+	unsigned char                                      UnknownData00[ 0x178 ];                           		// 0x0060 (0x0178) MISSED OFFSET
+	ULineBatchComponent*                               LineBatcher;                                             // 0x01D8 (0x0008) MISSED OFFSET
+	ULineBatchComponent*                               PersistentLineBatcher;                                   // 0x01E0 (0x0008) MISSED OFFSET
+	unsigned char                                      UnknownData01[ 0x1C4 ];                           		// 0x01E8 (0x01C4) MISSED OFFSET
 
 private:
 	static UClass* pClassPointer;
