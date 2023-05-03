@@ -119,6 +119,21 @@ UObject* CreateImport_hook(ULinkerLoad* Context, int i)
 	return object;
 }
 
+UObject* CreateExport_hook(ULinkerLoad* Context, int i)
+{
+	logger.writeToLog(wstring_format(L"Creating UExport %i in %s\n", i + 1, Context->Filename.Data), true);
+	UObject* object = CreateExport_orig(Context, i);
+	if (object != nullptr) {
+		logger.writeToLog(wstring_format(L"Loaded UExport %i (%hs)\n", i + 1, object->GetName()), true);
+	}
+	else {
+		logger.writeToLog(wstring_format(L"FAILED TO LOAD UEXPORT %i!\n", i + 1), true);
+	}
+	logger.flush();
+
+	return object;
+}
+
 // Logs a message from a source
 void logMessage(const wchar_t* logSource, wchar_t* formatStr, void* param1, void* param2, void* param3, void* param4)
 {
@@ -317,6 +332,13 @@ SPI_IMPLEMENT_ATTACH
 	// CreateImport
 	INIT_FIND_PATTERN_POSTHOOK(CreateImport, /*48 8b c4 55 41*/ "54 41 55 41 56 41 57 48 8b ec 48 83 ec 70 48 c7 45 d0 fe ff ff ff 48 89 58 10 48 89 70 18 48 89 78 20 4c 63 e2");
 	INIT_HOOK_PATTERN(CreateImport);
+
+	if (nullptr != std::wcsstr(GetCommandLineW(), L" -debugexportcreation")) {
+		// Hook CreateExport - this will print a ton of logs!
+		// This is game specific since pattern has to extend into memory addressing
+		INIT_FIND_PATTERN_POSTHOOK(CreateExport, /*89 54 24 10 55*/ "56 57 41 54 41 55 41 56 41 57 48 8b ec 48 83 ec 70 48 c7 45 d0 fe ff ff ff 48 89 9c 24 c0 00 00 00 4c 63 e2 48 8b f1");
+		INIT_HOOK_PATTERN(CreateExport);
+	}
 
 	// FIX ADDR
 	// OBJECT PRELOAD (called on every object in a package file, can be used for seekfree)
