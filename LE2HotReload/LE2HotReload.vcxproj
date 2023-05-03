@@ -93,9 +93,6 @@
   <ItemGroup>
     <ClCompile Include="LE2HotReload.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="HookPrototypes.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
