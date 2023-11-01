@@ -1,3 +1,5 @@
+#define GAMELE2
+
 #include "../../Shared-ASI/Interface.h"
 #include "../../Shared-ASI/Common.h"
 
