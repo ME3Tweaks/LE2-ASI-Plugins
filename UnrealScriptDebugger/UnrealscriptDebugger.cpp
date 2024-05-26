@@ -149,29 +149,30 @@ void breakState()
 	isStepping = false;
 
 	SendMsgToLEX(L"Break", DebuggerStack.top());
-
 	MSG msg;
-    BOOL bRet; 
-	while ((bRet = GetMessage(&msg, nullptr, 0, 0)) != 0)
+	while (true)
 	{
-		if (bRet == -1 || msg.message == WM_CLOSE)
-		{
-			msg.message = WM_QUIT;
-			pendingDetach = true;
-			break;
-		}
 		if (resume)
 		{
 			resume = false;
 			break;
 		}
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		{
+			if (msg.message == WM_QUIT || msg.message == WM_CLOSE)
+			{
+				msg.message = WM_QUIT;
+				pendingDetach = true;
+				break;
+			}
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
-    if (msg.message == WM_QUIT)
-    {
+	if (msg.message == WM_QUIT)
+	{
 		PostQuitMessage(static_cast<int>(msg.wParam));
-    }
+	}
 }
 
 __forceinline bool ShouldBreak(const std::string& nodePathString, const unsigned short location)
