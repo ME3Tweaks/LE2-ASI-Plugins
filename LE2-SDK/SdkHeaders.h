@@ -74,7 +74,7 @@ public:
 	}
 
 	/// <summary>
-	/// Do not use this on TArrays you don't create yourself, as the Unreal allocator won't work with them.
+	/// You must have setup UnrealMalloc before using this function!
 	/// </summary>
 	/// <param name="InputData"></param>
 	void Add(T InputData)
@@ -82,7 +82,7 @@ public:
 		if (Count >= Max)
 		{
 			Max = Count + 3 * Count / 8 + 16;
-			Data = (T*)realloc(Data, sizeof(T) * Max);
+			Data = (T*)UnrealMalloc::GMalloc.Realloc(Data, sizeof(T) * Max);
 		}
 		Data[Count++] = InputData;
 	};
