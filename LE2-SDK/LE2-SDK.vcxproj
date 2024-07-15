@@ -15,6 +15,7 @@
     <ClInclude Include="SdkInitializer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BaseMalloc.cpp" />
     <ClCompile Include="SDK_HEADERS\BIOC_Materials_functions.cpp" />
     <ClCompile Include="SDK_HEADERS\Core_functions.cpp" />
     <ClCompile Include="SDK_HEADERS\Engine_functions.cpp" />

@@ -16,7 +16,7 @@
 #include <Windows.h>
 #include <cstdio>
 #include "SdkInitializer.h"
-
+#include "BaseMalloc.h"
 
 
 /*
@@ -267,6 +267,8 @@ struct FObjectExport : public FObjectResource
 	FGuid PackageGuid;
 	int PackageFlags;
 };
+
+#include "../../Shared-ASI/TMap.h" // Custom implementation needs added before we do the main .h files
 
 /*
 # ========================================================================================= #
