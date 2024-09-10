@@ -2,7 +2,7 @@
 
 #include "../../Shared-ASI/Interface.h"
 #include "../../Shared-ASI/Common.h"
-#include "../../Shared-ASI/ME3Tweaks//ME3TweaksHeader.h"
+#include "../../Shared-ASI/ME3Tweaks/ME3TweaksHeader.h"
 #define MYHOOK "DebugLogger_"
 
 // STRUCTS =====================================================
@@ -286,3 +286,10 @@ typedef UObject* (*tStaticAllocateObject)(
 tStaticAllocateObject StaticAllocateObject = nullptr;
 tStaticAllocateObject StaticAllocateObject_orig = nullptr;
 
+typedef UBOOL(*tFShaderSerialize)(FShader* Context, FArchive* Ar);
+tFShaderSerialize FShaderSerialize = nullptr;
+tFShaderSerialize FShaderSerialize_orig = nullptr;
+
+typedef UBOOL(*tFVertexFactoryParameterRefSerialize)(FArchive* Ar, FVertexFactoryParameterRef* Ref);
+tFVertexFactoryParameterRefSerialize FVertexFactoryParameterRefSerialize = nullptr;
+tFVertexFactoryParameterRefSerialize FVertexFactoryParameterRefSerialize_orig = nullptr;

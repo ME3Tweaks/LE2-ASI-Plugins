@@ -1,9 +1,12 @@
 #include <chrono>
 #include <cstdio>
+#include <map>
 #include <string>
 #include <set>
 #include <stack>
 #include <thread>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "HookPrototypes.h"
 
@@ -316,6 +319,96 @@ UObject* StaticAllocateObject_hook(
 	}
 }
 
+// =========================
+// SHADER DECOMP
+// =========================
+void DumpShaderFuncAddrs(auto map, wstring logName)
+{
+	std::wofstream funcAddrLog(logName, std::ios::binary);
+	for (const auto& [funcAddr, types] : map)
+	{
+		funcAddrLog << std::format(L"{:X}\n", funcAddr);
+		for (const auto& typeName : types)
+		{
+			funcAddrLog << std::format(L"\t{}\n", typeName);
+		}
+		funcAddrLog << L"\n";
+	}
+	funcAddrLog.flush();
+}
+unordered_map<uintptr_t, std::unordered_set<wstring>> seenShaders{};
+UBOOL FShaderSerialize_hook(FShader* context, FArchive* Ar)
+{
+	const auto retval = FShaderSerialize_orig(context, Ar);
+
+	const auto vtablePtr = *reinterpret_cast<void***>(context);
+	const auto serializeFuncPtr = vtablePtr[8];
+	constexpr uintptr_t ghidraBaseAddr = 0x7ff7c6030000;
+	const auto ghidraAddr = SDKInitializer::Instance()->GetModuleBaseRelativeAddress(serializeFuncPtr) + ghidraBaseAddr;
+	if (const auto search = seenShaders.find(ghidraAddr); search != seenShaders.end())
+	{
+		search->second.emplace(context->Type->Name);
+	}
+	else
+	{
+		auto [iter, _] = seenShaders.emplace(ghidraAddr, std::unordered_set<wstring>{});
+		iter->second.emplace(context->Type->Name);
+	}
+
+	if (false)
+	{
+		DumpShaderFuncAddrs(seenShaders, L"ghidraShaderSerializeFuncs.txt");
+	}
+
+	return retval;
+}
+
+void DumpShaderFuncAddrs(std::map<std::pair<uintptr_t, uintptr_t>, std::unordered_set<wstring>> map, const wstring& logName)
+{
+	std::wofstream funcAddrLog(logName, std::ios::binary);
+	for (const auto& [funcAddr, types] : map)
+	{
+		funcAddrLog << std::format(L"Bind {:X} , Serialize {:X}\n", funcAddr.first, funcAddr.second);
+		for (const auto& typeName : types)
+		{
+			funcAddrLog << std::format(L"\t{}\n", typeName);
+		}
+		funcAddrLog << L"\n";
+	}
+	funcAddrLog.flush();
+}
+map<std::pair<uintptr_t, uintptr_t>, std::unordered_set<wstring>> seenVertexFactories{};
+UBOOL FVertexFactoryParameterRefSerialize_hook(FArchive* Ar, FVertexFactoryParameterRef* Ref)
+{
+	const auto retval = FVertexFactoryParameterRefSerialize_orig(Ar, Ref);
+
+	const auto vtablePtr = *reinterpret_cast<void***>(Ref->Parameters);
+	const auto bindFuncPtr = vtablePtr[1];
+	const auto serializeFuncPtr = vtablePtr[2];
+	constexpr uintptr_t ghidraBaseAddr = 0x7ff74a890000;
+	const auto bindGhidraAddr = SDKInitializer::Instance()->GetModuleBaseRelativeAddress(bindFuncPtr) + ghidraBaseAddr;
+	const auto serializeGhidraAddr = SDKInitializer::Instance()->GetModuleBaseRelativeAddress(serializeFuncPtr) + ghidraBaseAddr;
+	const auto ghidraAddrs = std::make_pair(bindGhidraAddr, serializeGhidraAddr);
+
+	if (const auto search = seenVertexFactories.find(ghidraAddrs); search != seenVertexFactories.end())
+	{
+		search->second.emplace(Ref->VertexFactoryType->Name);
+	}
+	else
+	{
+		auto [iter, _] = seenVertexFactories.insert(std::make_pair(ghidraAddrs, unordered_set<wstring>{}));
+		iter->second.emplace(Ref->VertexFactoryType->Name);
+	}
+
+	if (false)
+	{
+		DumpShaderFuncAddrs(seenVertexFactories, L"ghidraVertexFactorySerializeFuncs.txt");
+	}
+
+	return retval;
+}
+
+
 
 SPI_IMPLEMENT_ATTACH
 {
@@ -323,6 +416,11 @@ SPI_IMPLEMENT_ATTACH
 
 	writeln(L"Initializing DebugLogger...");
 	INIT_CHECK_SDK();
+
+	INIT_POSTHOOK(FShaderSerialize, /*40 55 56 57 48*/ "83 ec 40 48 c7 44 24 20 fe ff ff ff 48 89 5c 24 78 48 8b fa 48 8b f1 44 8b 41 40 41 8b c0 c1 e8 03 24 07")
+		INIT_POSTHOOK(FVertexFactoryParameterRefSerialize, /*40 53 56 57 41*/ "57 48 83 ec 48 33 ff 4c 89 74 24 38 4c 8b f2 48 8b d9 44 8b ff 39 79 18 74 5c 48 8b 52 08 48 85 d2 74 1c")
+
+		return true;
 
 	LoadCommonClassPointers(InterfacePtr);
 
@@ -360,7 +458,7 @@ SPI_IMPLEMENT_ATTACH
 	INIT_HOOK_PATTERN(StaticAllocateObject);
 
 	// Logging functions to hook up for writing to disk
-	hookLoggingFunctions(InterfacePtr);
+	// hookLoggingFunctions(InterfacePtr);
 	return true;
 }
 

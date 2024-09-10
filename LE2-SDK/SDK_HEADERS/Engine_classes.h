@@ -10603,6 +10603,184 @@ public:
 	void BioAddPostProcessEffect ( class UPostProcessEffect* pEffect, class UObject* pOwner, unsigned char nCombineType );
 };
 
+// =================
+// START SHADER DECOMP
+// =================
+
+// Made with LE3 decomp, but probably the same for LE2.
+class FArchive
+{
+	// Built from Ghidra decompilation
+	// FArchive size appears to be 0x8C
+public:
+	int ArVer;
+	int ArNetVer;
+	int arLicenseeVer;
+
+	BOOL ArIsLoading;
+	BOOL ArIsSaving;
+	BOOL ArIsTransacting;
+	BOOL ArIsWantBinaryPropertySerialization;
+	BOOL ArIsForceUnicode;
+	BOOL ArIsPersistent;
+	BOOL ArForEdit;
+	BOOL ArForClient;
+	BOOL ArForServer;
+	BOOL ArIsError;
+	BOOL ArIsCriticalError;
+	BOOL ArContainsCookedData;
+	BOOL ArContainsCode;
+	BOOL ArContainsMap;
+	BOOL ArForceByteSwapping;
+	int ArSerializingDefaults;
+
+	BOOL ArIgnoreArchetypeRef;
+	BOOL ArIgnoreOuterRef;
+	BOOL ArIgnoreClassRef;
+	BOOL ArAllowEliminatingReferences;
+	BOOL ArAllowLazyLoading;
+	BOOL ArIsObjectReferenceCollector;
+	BOOL ArIsCountingMemory;
+
+	DWORD ArPortFlags;
+	BOOL ArShouldSkipBulkData;
+	BOOL ArIsSaveGame;
+	BOOL ArIsFinalPackageSave;
+
+	// Decomp shows this might be 32 or 64 bit, unsure if a second property follows and its 2 32bits
+	// It'd make sense to be a 32bit as max file size is 2GiB in LE
+	__int64 ArMaxSerialSize;
+	//int ArMaxSerialSize;
+	BOOL ArBioWareUnknown;
+
+	virtual void Destructor();
+	virtual void Serialize(void* V, INT Length);
+	virtual void SerializeBits(void* V, INT LengthBits);
+	virtual void SerializeInt(DWORD& Value, DWORD Max);
+	virtual void Preload(UObject* Object);
+	virtual void CountBytes(SIZE_T InNum, SIZE_T InMax);
+	virtual FArchive& operator<<(UObject*& Res);
+	virtual FArchive& operator<<(FName& N);
+
+	virtual FString GetArchiveName() const;
+	virtual ULinker* GetLinker();
+	virtual INT Tell();
+	virtual INT TotalSize();
+	virtual UINT AtEnd();
+	virtual void Seek(INT InPos);
+};
+
+struct FVertexFactoryType
+{
+	void* _vftable;
+	DWORD HashIndex;
+	const wchar_t* Name;
+	const wchar_t* ShaderFilename;
+	FName TypeName;
+	BITFIELD bUsedWithMaterials : 1;
+	BITFIELD bSupportsStaticLighting : 1;
+	BITFIELD bSupportsDynamicLighting : 1;
+	BITFIELD bSupportsPrecisePrevWorldPos : 1;
+	void* ConstructParameters;
+	void* ShouldCacheRef;
+	void* ModifyCompilationEnvironmentRef;
+	INT MinPackageVersion;
+	INT MinLicenseePackageVersion;
+};
+
+struct FVertexFactoryParameterRef
+{
+	void* Parameters;
+	FVertexFactoryType* VertexFactoryType;
+};
+
+class FRenderResource
+{
+	FRenderResource* ResourceLink_elem;
+	void* nextnode;
+	void* prevnode;
+
+	BITFIELD bInitialized : 1;
+
+	virtual ~FRenderResource();
+	virtual void InitDynamicRHI();
+	virtual void ReleaseDynamicRHI();
+	virtual void InitRHI();
+	virtual void ReleaseRHI();
+	virtual void InitResource();
+	virtual void ReleaseResource();
+	virtual FString GetFriendlyName();
+};
+
+class FDeferredCleanupInterface
+{
+	virtual void FinishCleanup();
+	virtual ~FDeferredCleanupInterface();
+};
+
+class FShaderKey
+{
+public:
+	TArray<BYTE> Code;
+	DWORD ParameterMapCRC;
+};
+
+struct FShaderTarget
+{
+	//not sure if the number of bits is correct...
+	BITFIELD Frequency : 3;
+	BITFIELD Platform : 3;
+};
+
+struct FShaderType
+{
+	void** vtable;
+	DWORD HashIndex;
+	const wchar_t* Name;
+	const wchar_t* SourceFilename;
+	const wchar_t* FunctionName;
+	DWORD Frequency;
+	INT MinPackageVersion;
+	INT MinLicenseePackageVersion;
+
+	void* ConstructSerializedRef;
+	void* ModifyCompilationEnvironmentRef;
+
+	TMap<FGuid, void*> ShaderIdMap;
+	TSet<void*> ShaderCodeMap;
+};
+
+class FShader : public FRenderResource, public FDeferredCleanupInterface
+{
+public:
+	FShaderKey Key;
+	FShaderTarget Target;
+	void* unk1;
+	void* unk2;
+	void* unk3;
+	FShaderType* Type;
+	FGuid Id;
+	mutable UINT NumRefs;
+	FSetElementId CodeMapId;
+	UINT NumInstructions;
+	mutable INT NumResourceInitRefs;
+
+
+	virtual ~FShader();
+	virtual UBOOL Serialize(FArchive& Ar);
+	// FRenderResource
+	virtual void InitRHI();
+	virtual void ReleaseRHI();
+	//FDeferredCleanupInterface
+	virtual void FinishCleanup();
+	virtual UBOOL IsUniformExpressionSetValid(const /*FUniformExpressionSet&*/ void* UniformExpressionSet) const;
+	//virtual EShaderRecompileGroup GetRecompileGroup();
+};
+// =================
+// END SHADER DECOMP
+// =================
+
+
 // Class Engine.NetConnection
 // 0x5FE0 (0x606C - 0x008C)
 class UNetConnection : public UPlayer

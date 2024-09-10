@@ -42,6 +42,9 @@
 #undef lst15
 #undef lst16
 
+typedef UINT				UBOOL;
+typedef unsigned long       BITFIELD;
+
 /*
 # ========================================================================================= #
 # Structs

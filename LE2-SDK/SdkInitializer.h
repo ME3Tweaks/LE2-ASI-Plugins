@@ -73,4 +73,14 @@ public:
 		}
 		return initializer;
 	}
+
+	inline uintptr_t GetModuleBaseRelativeAddress(const void* absoluteAddress) const noexcept
+	{
+		return static_cast<const BYTE*>(absoluteAddress) - ModuleBase;
+	}
+
+	inline void* GetAbsoluteAddress(const uintptr_t moduleBaseRelativeAddress) const noexcept
+	{
+		return ModuleBase + moduleBaseRelativeAddress;
+	}
 };
