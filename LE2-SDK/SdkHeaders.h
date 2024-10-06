@@ -16,7 +16,6 @@
 #include <Windows.h>
 #include <cstdio>
 #include <string>
-
 #include "SdkInitializer.h"
 #include "BaseMalloc.h"
 
