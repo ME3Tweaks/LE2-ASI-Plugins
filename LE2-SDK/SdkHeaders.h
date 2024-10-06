@@ -15,6 +15,8 @@
 #pragma once
 #include <Windows.h>
 #include <cstdio>
+#include <string>
+
 #include "SdkInitializer.h"
 #include "BaseMalloc.h"
 
@@ -178,7 +180,7 @@ struct FName
 
 			if (!strcmp(lookup, "None"))
 			{
-				MessageBoxW(nullptr, L"FName lookup contstructor failed for 'None'!", L"LE2 SDK ERROR", MB_OK | MB_ICONERROR);
+				MessageBoxW(nullptr, L"FName lookup constructor failed for 'None'!", L"LE2 SDK ERROR", MB_OK | MB_ICONERROR);
 				exit(-1);
 			}
 			else
@@ -200,6 +202,16 @@ struct FString : public TArray<wchar_t> {
 			this->Data = Other;
 	};
 
+
+	FString(std::wstring& Other)
+	{
+		this->Count = Other.length() + 1;
+		this->Max = this->Count;
+		this->Data = (wchar_t*)UnrealMalloc::GMalloc.Malloc(this->Count * sizeof(wchar_t));
+		memcpy(this->Data, Other.c_str(), this->Count * sizeof(wchar_t));
+		Data[this->Count] = 0; // Ensure null termination... I hope
+	};
+
 	~FString() {};
 
 	FString operator = (wchar_t* Other)
@@ -212,6 +224,16 @@ struct FString : public TArray<wchar_t> {
 				this->Data = Other;
 		}
 
+		return *this;
+	};
+
+	// Copy constructor for FString
+	FString operator = (FString* Other)
+	{
+		this->Count = Other->Count;
+		this->Max = Other->Max;
+		this->Data = (wchar_t*)UnrealMalloc::GMalloc.Malloc(this->Max * sizeof(wchar_t));
+		memcpy(this->Data, Other->Data, Other->Count * sizeof(wchar_t));
 		return *this;
 	};
 };

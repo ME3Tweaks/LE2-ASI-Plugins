@@ -11534,13 +11534,24 @@ public:
 
 };
 
+struct FStaticMeshElement {
+	UMaterialInterface* Material;
+	unsigned char Unknown[0x48];
+};
+
+struct FStaticMeshRenderData {
+	unsigned char Unknown[0x1b0];
+	TArray<FStaticMeshElement> Elements;
+};
+
 // Class Engine.StaticMesh
 // 0x0130 (0x0190 - 0x0060)
 class UStaticMesh : public UObject
 {
 public:
-	unsigned char                                      UnknownData00[ 0x10 ];                            		// 0x0060 (0x0010) MISSED OFFSET
-	struct TArray<struct FStaticMeshLODInfo>           LODInfo;                                          		// 0x0070 (0x0010) [0x0000000000001041]              ( CPF_Edit | CPF_EditConstArray | CPF_Native )
+	//unsigned char                                      UnknownData00[ 0x10 ];                            		// 0x0060 (0x0010) MISSED OFFSET
+	struct TArray<FStaticMeshRenderData*>			   NativeLODInfo;                                          		// 0x0060 (0x0010) [0x0000000000001031]              ( CPF_Edit | CPF_EditConstArray | CPF_Native ) - Actual serialized data
+	struct TArray<struct FStaticMeshLODInfo>           Editor_LODInfo;                                          		// 0x0070 (0x0010) [0x0000000000001041]              ( CPF_Edit | CPF_EditConstArray | CPF_Native ) - Will always be blank, DO NOT USE
 	float                                              LODDistanceRatio;                                 		// 0x0080 (0x0004) [0x0000000000000001]              ( CPF_Edit )
 	float                                              LODMaxRange;                                      		// 0x0084 (0x0004) [0x0000000000000001]              ( CPF_Edit )
 	unsigned char                                      UnknownData01[ 0x10 ];                            		// 0x0088 (0x0010) MISSED OFFSET
