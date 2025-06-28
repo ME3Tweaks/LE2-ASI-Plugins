@@ -17,7 +17,7 @@
 #include <cstdio>
 #include <string>
 #include "SdkInitializer.h"
-#include "BaseMalloc.h"
+#include "../../Shared-ASI/BaseMalloc.h"
 
 
 /*
@@ -42,6 +42,9 @@
 #undef lst14
 #undef lst15
 #undef lst16
+
+typedef UINT				UBOOL;
+typedef unsigned long       BITFIELD;
 
 /*
 # ========================================================================================= #
@@ -100,6 +103,60 @@ struct PackedIndex
 	DWORD Offset : 20;
 	DWORD Length : 9;
 	DWORD Bits : 3;
+};
+
+// ===================
+// Ref Count Pointer
+// ===================
+// Wrapper for types that support Ref counting
+// In compiled code it is simply a pointer to the object.
+template<typename T>
+struct RefCountPointer {
+	T* Object; // Pointer to the object that is referenced
+
+	RefCountPointer() {}
+
+	RefCountPointer(T* InObject)
+		: Object(InObject) {
+	}
+
+	RefCountPointer& operator=(T* other)
+	{
+		// There's some reference counting going on here...
+		// Not sure we should mess with doing it
+		// If stuff really doesn't work, we can do that I guess.
+		Object = other;
+		return *this;
+	}
+
+	RefCountPointer& operator=(const RefCountPointer& other)
+	{
+		return *this = other.Object;
+	}
+
+};
+
+// ==============
+// TLinkedList
+// ==============
+template< class T > struct TLinkedList
+{
+public:
+	// Crude way of counting the number of remaining forward items in the linked list.
+	// You should call this at the start of the list, not the end.
+	int Count() {
+		int count = 1;
+		TLinkedList* _nextItem = NextItem;
+		while (_nextItem != nullptr) {
+			count++;
+			_nextItem = _nextItem->NextItem;
+		}
+		return count;
+	}
+
+	T CurrentItem;
+	TLinkedList* NextItem;
+	TLinkedList** PreviousItem;
 };
 
 #pragma pack(push, 1)
