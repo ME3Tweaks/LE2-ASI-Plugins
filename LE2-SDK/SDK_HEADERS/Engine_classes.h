@@ -155,6 +155,18 @@
 # ========================================================================================= #
 */
 
+enum EShaderPlatform
+{
+	SP_SM3 = 0,
+	SP_PS3 = 1,
+	SP_360 = 2,
+	SP_SM2 = 3,
+	SP_SM4 = 4,
+	SP_SM5 = 5,
+	SP_Dingo = 6, // XBOX ONE
+	SP_Orbis = 7 // PS4
+};
+
 // Enum Engine.Actor.EPhysics
 /*enum EPhysics
 {
@@ -1753,7 +1765,7 @@
 };*/
 
 // Enum Engine.Material.EBlendMode
-/*enum EBlendMode
+enum EBlendMode
 {
 	BLEND_Opaque                                       = 0,
 	BLEND_Masked                                       = 1,
@@ -1763,10 +1775,10 @@
 	BLEND_SoftMasked                                   = 5,
 	BLEND_AlphaComposite                               = 6,
 	BLEND_MAX                                          = 7
-};*/
+};
 
 // Enum Engine.Material.EMaterialLightingModel
-/*enum EMaterialLightingModel
+enum EMaterialLightingModel
 {
 	MLM_Phong                                          = 0,
 	MLM_NonDirectional                                 = 1,
@@ -1775,7 +1787,7 @@
 	MLM_Custom                                         = 4,
 	MLM_Anisotropic                                    = 5,
 	MLM_MAX                                            = 6
-};*/
+};
 
 // Enum Engine.DistributionFloatParameterBase.DistributionParamMode
 /*enum DistributionParamMode
@@ -34951,6 +34963,537 @@ public:
 	static UClass* StaticClass();
 
 };
+
+
+
+// ========================================= IO DECOMP =================================================================
+// This is largely based on LE3, some LE1, so it might not be totally accurate
+// Foward declaration
+struct FArchive;
+
+// This is cause inheritance without defined virtual methods doesn't work.
+struct FArchive_VTable {
+	void (*Destructor)(FArchive* Ar);
+	void (*Serialize)(FArchive* Ar, void* V, INT Length);
+	void (*SerializeBits)(FArchive* Ar, void* V, INT LengthBits);
+	void (*SerializeInt)(FArchive* Ar, DWORD& Value, DWORD Max);
+	void (*Preload)(FArchive* Ar, UObject* Object);
+	void (*CountBytes)(FArchive* Ar, SIZE_T InNum, SIZE_T InMax);
+	FArchive& (*SerializeObject)(FArchive* Ar, UObject*& Res);
+	FArchive& (*SerializeName)(FArchive* Ar, FName& N);
+	FString(*GetArchiveName)(FArchive* Ar);
+	ULinker* (*GetLinker)(FArchive* Ar);
+	INT(*Tell)(FArchive* Ar);
+	INT(*TotalSize)(FArchive* Ar);
+	UINT(*AtEnd)(FArchive* Ar);
+	void (*Seek)(FArchive* Ar, INT InPos);
+	// Probably more.
+};
+
+struct FArchive
+{
+	// Built from Ghidra decompilation
+	// FArchive size appears to be 0x8C
+public:
+	FArchive_VTable* VTable;
+	int ArVer;
+	int ArNetVer;
+	int ArLicenseeVer;
+
+	BOOL ArIsLoading;
+	BOOL ArIsSaving;
+	BOOL ArIsTransacting;
+	BOOL ArIsWantBinaryPropertySerialization;
+	BOOL ArIsForceUnicode;
+	BOOL ArIsPersistent;
+	BOOL ArForEdit;
+	BOOL ArForClient;
+	BOOL ArForServer;
+	BOOL ArIsError;
+	BOOL ArIsCriticalError;
+	BOOL ArContainsCookedData;
+	BOOL ArContainsCode;
+	BOOL ArContainsMap;
+	BOOL ArForceByteSwapping;
+	int ArSerializingDefaults;
+
+	BOOL ArIgnoreArchetypeRef;
+	BOOL ArIgnoreOuterRef;
+	BOOL ArIgnoreClassRef;
+	BOOL ArAllowEliminatingReferences;
+	BOOL ArAllowLazyLoading;
+	BOOL ArIsObjectReferenceCollector;
+	BOOL ArIsCountingMemory;
+
+	DWORD ArPortFlags;
+	BOOL ArShouldSkipBulkData;
+	BOOL ArIsSaveGame;
+	BOOL ArIsFinalPackageSave;
+
+	// Decomp shows this might be 32 or 64 bit, unsure if a second property follows and its 2 32bits
+	// It'd make sense to be a 32bit as max file size is 2GiB in LE
+	__int64 ArMaxSerialSize;
+	//int ArMaxSerialSize;
+	BOOL ArBioWareUnknown; // Might need checked if this is in LE1
+};
+
+struct FArchiveFileReader : public FArchive {
+	HANDLE Handle;
+	INT StatsHandle;
+	FString Filename;
+	void* Error;
+	int Size;
+	int Pos;
+	int BufferBase;
+	int BufferCount;
+	BYTE Buffer[1024];
+};
+
+struct FArchiveProxy : public FArchive {
+	FArchive* InnerArchive;
+};
+
+struct FMemoryArchiveBase : public FArchive {
+	// C++ is weird...
+	FMemoryArchiveBase(TArray<BYTE>& InData) : FArchive(), Offset(0), Data(InData) {
+		ArVer = 684; // LE1
+		ArLicenseeVer = 171; // LE1
+	}
+
+public:
+	INT Offset;
+	TArray<BYTE>& Data;
+};
+
+struct FMemoryReader : public FMemoryArchiveBase {
+public:
+	FMemoryReader(TArray<BYTE>& InData) : FMemoryArchiveBase(InData)
+	{
+		ArIsLoading = true;
+	}
+};
+
+// Just for distinction
+struct FMemoryWriter : public FMemoryArchiveBase {
+public:
+	FMemoryWriter(TArray<BYTE>& InData) : FMemoryArchiveBase(InData)
+	{
+		ArIsSaving = true;
+	}
+};
+
+
+// =============================================SHADER COMPILER DECOMP =================================================
+// THERE'S A LOT OF IT
+
+// Forward declarations
+struct FMaterial;
+struct FShaderType;
+struct FShaderCompilerEnvironment;
+struct CompiledShaderData;
+struct FMaterialShaderMap;
+struct FMaterial;
+struct FUniformExpressionSet;
+struct FShaderParameterMap;
+
+class FShader;
+
+
+// Typedefs
+// ShaderType ConstructFromSerialized (constructor, essentially)
+typedef FShader* (*tConstructFromSerialized)(FShaderType*);
+// ShaderType ModifyCompilationEnvironment
+typedef void (*tModifyCompilationEnvironment)(EShaderPlatform, FShaderCompilerEnvironment*);
+// VertexFactory ModifyCompilationEnvironment
+typedef bool (*tVFShouldCache)(EShaderPlatform, FMaterial*, FShaderType*);
+// Returns itself if this is the proper type (global, material, mesh)
+typedef FShaderType* (*tGetShaderTypeCast)(void*);
+// Signature seems to be that the data being accessed comes from Param1
+// Param 2 appears unused, no idea what it is.
+// Param 3 and 4 are some sort of numbers.
+typedef void* (*tConstructCompiledShader)(CompiledShaderData*, int*, int*, int*);
+// Type signature for calling ShouldCache()
+typedef bool (*tSTShouldCache)(EShaderPlatform, void*, void*);
+
+
+// Enums
+enum EShaderFrequency {
+	SF_VERTEX = 0,
+	SF_PIXEL = 3,
+};
+
+
+// Structs, Classes
+// In no real order.
+
+// other projects that use this struct but not the sdk 
+// need to make sure they don't overlap
+#ifndef _FParameterAllocation
+#define _FParameterAllocation
+// Describes how to load data into a shader
+struct FParameterAllocation
+{
+	uint16_t BufferIndex;
+	uint16_t BaseIndex;
+	uint16_t Size;
+	uint16_t SamplerIndex;
+	BOOL bBound;
+};
+#endif
+
+/// <summary>
+/// Struct used to pass into ModifyCompilationEnvironment so macroDefintions gets updated
+/// </summary>
+struct FShaderCompilerEnvironment
+{
+	TMap<FString, FString> includeFiles;
+	wchar_t* vertexFactoryFileName;
+	char* materialHlsl;
+	TMap<FString, FString> macroDefinitions;
+	TArray<int> compileFlags;
+
+	// DO NOT USE THE FOLLOWING IF YOU ARE PASSING OBJECT INTO THE GAME!! 
+	// IT WILL BLOW IT UP.
+	std::wstring materialHlslString;
+	FUniformExpressionSet* UniformExpressions;
+	FShaderParameterMap* ParameterMap;
+};
+
+struct FVertexFactoryType
+{
+	void* _vftable;
+	DWORD HashIndex;
+	const wchar_t* Name;
+	const wchar_t* ShaderFilename;
+	FName TypeName;
+	BITFIELD bUsedWithMaterials : 1;
+	BITFIELD bSupportsStaticLighting : 1;
+	BITFIELD bSupportsDynamicLighting : 1;
+	BITFIELD bSupportsPrecisePrevWorldPos : 1;
+	void* ConstructParameters;
+	tVFShouldCache ShouldCacheRef;
+	tModifyCompilationEnvironment ModifyCompilationEnvironmentRef;
+	INT MinPackageVersion;
+	INT MinLicenseePackageVersion;
+};
+
+struct FVertexFactoryParameterRef
+{
+	void* Parameters;
+	FVertexFactoryType* VertexFactoryType;
+};
+
+class FRenderResource
+{
+	FRenderResource* ResourceLink_elem;
+	void* nextnode;
+	void* prevnode;
+
+	BITFIELD bInitialized : 1;
+
+	virtual ~FRenderResource();
+	virtual void InitDynamicRHI();
+	virtual void ReleaseDynamicRHI();
+	virtual void InitRHI();
+	virtual void ReleaseRHI();
+	virtual void InitResource();
+	virtual void ReleaseResource();
+	virtual FString GetFriendlyName();
+};
+
+class FDeferredCleanupInterface
+{
+	virtual void FinishCleanup();
+	virtual ~FDeferredCleanupInterface();
+};
+
+class FShaderKey
+{
+public:
+	TArray<BYTE> Code;
+	DWORD ParameterMapCRC;
+};
+
+struct FMaterialUniformExpression {
+	void* VTable;
+	INT NumRefs;
+};
+
+struct FMaterialUniformExpressionTexture : FMaterialUniformExpression {
+	INT TextureIndex;
+	UTexture* DefaultValueDuringCompile;
+	UTexture* LegacyTexture;
+	UTexture* TransientOverrideValue;
+};
+
+struct FShaderTarget
+{
+	//not sure if the number of bits is correct...
+	BITFIELD Frequency : 3;
+	BITFIELD Platform : 3;
+};
+
+struct FShaderType_VTable {
+	void* GetShaderFileHash;
+	tGetShaderTypeCast GetGlobalShadertype; // 0x8
+	tGetShaderTypeCast GetMaterialShaderType; // 0x10
+	tGetShaderTypeCast GetMeshMaterialShaderType; // 0x18
+};
+
+// LE1's seems to require pragma pack 4
+// Maybe they all do but they magically lined up anyways.
+#pragma pack(4)
+struct FShaderType
+{
+	// This class has polymorphism so it uses a double vtable pointer vptr and vftable
+	// Don't care tho.
+	FShaderType_VTable* vtable;
+	DWORD HashIndex;
+	const wchar_t* Name;
+	const wchar_t* SourceFilename;
+	const wchar_t* FunctionName;
+	EShaderFrequency Frequency;
+	INT MinPackageVersion;
+	INT MinLicenseePackageVersion;
+	tConstructFromSerialized ConstructSerializedRef;
+	tModifyCompilationEnvironment ModifyCompilationEnvironmentRef;
+	TMap<FGuid, void*> ShaderIdMap;
+	TSet<void*> ShaderCodeMap;
+};
+#pragma pop
+
+struct ShaderCompilerError {
+	FString ErrorFilename;
+	FString ErrorLine;
+	FString ErrorMessageStripped;
+};
+
+struct FShaderCompilerData {
+	TMap<FString, FParameterAllocation> ParameterMap;
+	TArray<ShaderCompilerError> Errors;
+	FShaderTarget Target;
+	TArray<BYTE> ShaderBytecode;
+	int numInstructions;
+};
+
+struct FUniformExpressionSet {
+	// RefCount interface
+	void* VTable;
+	int NumRefs;
+
+	// We might have to type this data out for it to work in an
+	// assignment operation
+	TArray<RefCountPointer<void>> UniformPixelVectorExpressions;
+	TArray<RefCountPointer<void>> UniformPixelScalarExpressions;
+	TArray<RefCountPointer<FMaterialUniformExpressionTexture>> Uniform2DTextureExpressions;
+	TArray<RefCountPointer<FMaterialUniformExpressionTexture>> UniformCubeTextureExpressions;
+	TArray<RefCountPointer<void>> UniformVertexVectorExpressions;
+	TArray<RefCountPointer<void>> UniformVertexScalarExpressions;
+};
+
+struct FShaderParameterMap {
+	FUniformExpressionSet* UniformExpressionSet;
+	TMap<FString, FParameterAllocation> ParameterMap;
+};
+
+struct CompiledShaderData {
+	// From decomp
+	FShaderType* ShaderType; // Pointer to the shader type
+	FShaderTarget Target; // Shader target information
+	TArray<BYTE>* Code; // Compiled shader code
+	FShaderParameterMap* ParameterMap;
+	UINT NumInstructions; // Number of instructions in the shader
+};
+
+struct VertexCompiledShaderData : CompiledShaderData {
+	// From decomp
+	// This pointer is passed into some functions but never seems to actually be read from those functions. Unknown purpose.
+	void* Unknown;
+	FVertexFactoryType* VertexFactoryType; // Pointer to the vertex factory type
+};
+
+// Global, Mesh, and Material all have these
+struct FShaderTypeSub : FShaderType {
+	// Invoke to create an FShader object from freshly minted shader data
+	tConstructCompiledShader ConstructCompiledRef;
+	tSTShouldCache ShouldCacheRef;
+};
+
+struct FMaterial_VTable {
+private:
+	void (*Destructor)();
+	void (*Compile)();
+public:
+	bool (*ShouldCache)(FMaterial*, EShaderPlatform, FShaderType*, FVertexFactoryType*);
+
+private:
+	char Unknown[0x188];
+public:
+	EBlendMode(*GetBlendMode)(FMaterial*);
+	// There's more after this.
+};
+
+
+/// <summary>
+/// Base for Material Resource
+/// </summary>
+struct FMaterial {
+public:
+	FMaterial_VTable* VTable;
+	FUniformExpressionSet* UniformExpressionSet;
+	void* Unknown;
+	TArray<FString> CompileErrors;
+	TMap<UMaterialExpression*, INT> TextureDependencyLengthMap;
+	int MaxTextureDependencyLength;
+	RefCountPointer<FMaterialShaderMap> ShaderMap; // The shader map for this material
+	FGuid MaterialGuid; // 0x7C
+	void* LegacyUniformExpressions;
+	TArray<void*> TextureLookups; // Typing is probably wrong for the array
+	UINT NumUserTexCoords;
+	DWORD UsingTransforms;
+	DWORD ExtraBitfield; // See ghidra decomp for bitfield info, it doesn't show well in it
+	int DroppedFallbackComponents;
+};
+
+struct FMaterialResource : public FMaterial {
+	INT bUnk2; // seems to be bool?
+	UMaterial* Material;
+};
+
+class FShader : public FRenderResource, public FDeferredCleanupInterface
+{
+public:
+	FShaderKey Key;
+	FShaderTarget Target;
+	void* unk1;
+	void* unk2;
+	void* unk3;
+	FShaderTypeSub* Type; // FShader itself is abstract, and all subtypes have at least the same first few vars.
+	FGuid Id;
+	mutable UINT NumRefs;
+	FSetElementId CodeMapId;
+	UINT NumInstructions;
+	mutable INT NumResourceInitRefs;
+
+
+	virtual ~FShader();
+	virtual UBOOL Serialize(FArchive& Ar);
+	// FRenderResource
+	virtual void InitRHI();
+	virtual void ReleaseRHI();
+	//FDeferredCleanupInterface
+	virtual void FinishCleanup();
+	virtual UBOOL IsUniformExpressionSetValid(const /*FUniformExpressionSet&*/ void* UniformExpressionSet) const;
+	//virtual EShaderRecompileGroup GetRecompileGroup();
+};
+
+struct FShaderCache {
+	// From decomp
+	void* CompressedCache; // Not used on PC
+	TMap<FShaderType*, DWORD> ShaderTypeCRCMap;
+	BYTE Platform; // This seems to only be 1 byte according to decomp. But due to byte alignment, it actually uses 4 in memory, with 3 garbage bytes following it.
+};
+
+struct ShaderMap {
+	TMap<FShaderType*, FShader*> Shaders; // Ref counting
+	int InitCount;
+};
+
+struct FMeshMaterialShaderMap : ShaderMap {
+	FVertexFactoryType* VertexFactoryType;
+
+	static FMeshMaterialShaderMap* FMeshMaterialShaderMap::Allocate() {
+		auto res = (FMeshMaterialShaderMap*)UnrealMalloc::GMalloc.Malloc(sizeof(FMeshMaterialShaderMap));
+		memset(res, 0, sizeof(FMeshMaterialShaderMap));
+		return res;
+	}
+};
+
+struct FStaticSwitchParameter {
+	FName Name;
+	BOOL Value;
+	BOOL Override;
+	FGuid ExpressionGUID;
+};
+
+struct FStaticComponentMaskParameter {
+	FName Name;
+	BOOL R;
+	BOOL G;
+	BOOL B;
+	BOOL A;
+	BOOL Override;
+	FGuid ExpressionGUID;
+};
+
+struct FNormalParameter {
+	FName Name;
+	BYTE CompressionSettings; // Same as 'TextureCompressionSettings' in LEC
+	BOOL Override;
+	FGuid ExpressionGUID;
+};
+
+struct FStaticParameterSet {
+	FGuid BaseMaterialId;
+	TArray<FStaticSwitchParameter> StaticSwitchParameters;
+	TArray<FStaticComponentMaskParameter> StaticComponentMaskParameters;
+	TArray<FNormalParameter> NormalParameters;
+
+	bool operator==(const FStaticParameterSet& other) const
+	{
+		// This is a pretty complicated comparison, so we let the game handle it
+		// If you do not initialize this, it WILL not work!
+		if (StaticParameterSetEqualRef != nullptr) {
+			return StaticParameterSetEqualRef(*this, other);
+		}
+		else
+		{
+			// NOT INITIALIZED, THIS WILL NOT WORK!
+			DebugBreak();
+		}
+
+		return false;
+	}
+
+	// Pointer to in-game method to compare to FStaticParameterSet objects
+	typedef bool (*tStaticParameterSetEqual)(const FStaticParameterSet& a, const FStaticParameterSet& b);
+	static inline tStaticParameterSetEqual StaticParameterSetEqualRef;
+};
+
+inline int GetTypeHash(const FStaticParameterSet& set)
+{
+	return set.BaseMaterialId.A;
+}
+
+
+// Size needs verified
+struct FMaterialShaderMap {
+	// Ref counting interface
+	void* vtable;
+	INT NumRefs;
+
+	ShaderMap Parent;
+	TArray<FMeshMaterialShaderMap*> MeshShaderMaps; // Indirect Array
+	void* Shaders; // We don't care about this on PC, I think.
+	FGuid MaterialId; // Material finds this ID, then uses this map to find the appropriate shader type to use
+	FString FriendlyName; // Name to serialize
+	EShaderPlatform Platform;
+	FStaticParameterSet StaticParameters;
+	TMap<FVertexFactoryType*, FMeshMaterialShaderMap*> VertexFactoryMap; // Maps vertex factory types to their shaders that were compiled with them
+	FUniformExpressionSet UniformExpressionSet; // Uniform expressions used by this shader map
+	// Compiling and registration information.
+	// Kind of don't care about it.
+	INT FlagSet;
+
+	// A lot more stuff seems to follow below in decomp.
+};
+
+
+// TMap Implementations
+inline DWORD GetTypeHash(const FShaderType* shader)
+{
+	return shader ? shader->HashIndex : 0;
+}
 
 
 #ifdef _MSC_VER
