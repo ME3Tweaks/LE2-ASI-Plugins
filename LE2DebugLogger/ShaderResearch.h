@@ -725,7 +725,7 @@ bool hookShaderResearch(ISharedProxyInterface* InterfacePtr) {
 	FShaderResourceParameterSerialize = (tFShaderParameterSerialize)SDKInitializer::Instance()->GetAbsoluteAddress(0x351270); // LE2
 	InterfacePtr->InstallHook("FShaderResourceParameterSerialize", FShaderResourceParameterSerialize, FShaderResourceParameterSerialize_hook, (void**)&FShaderResourceParameterSerialize_orig);
 
-	FVertexFactoryParameterRefSerialize = (tFVertexFactoryParameterRefSerialize)SDKInitializer::Instance()->GetAbsoluteAddress(); // LE1
+	FVertexFactoryParameterRefSerialize = (tFVertexFactoryParameterRefSerialize)SDKInitializer::Instance()->GetAbsoluteAddress(0x8d9fb0); // LE1
 	InterfacePtr->InstallHook("FVertexFactoryParameterRefSerialize", FVertexFactoryParameterRefSerialize, FVertexFactoryParameterRefSerialize_hook, (void**)&FVertexFactoryParameterRefSerialize_orig);
 
 	/** BINDS */
@@ -780,17 +780,19 @@ bool hookShaderResearch(ISharedProxyInterface* InterfacePtr) {
 	InterfacePtr->InstallHook("FColorRemapShaderParametersBind", FColorRemapShaderParametersBind, FColorRemapShaderParametersBind_hook, (void**)&FColorRemapShaderParametersBind_orig);
 	*/
 
-	// Direct addresses
+	// Direct addresses - Functions
 	GetShaderTypeList = (tGetShaderTypeList)SDKInitializer::Instance()->GetAbsoluteAddress(0x35a1a0); // LE2
-	GetVertexFactoryTypeList = (tGetVertexFactoryTypeList)SDKInitializer::Instance()->GetAbsoluteAddress(0x62b940); // LE1
-	MemoryArchiveReaderVTableStart = SDKInitializer::Instance()->GetAbsoluteAddress(0x1427428); // LE1
-	MemoryArchiveWriterVTableStart = SDKInitializer::Instance()->GetAbsoluteAddress(0xfbbdb0); // LE1
-	FileReaderVTableStart = SDKInitializer::Instance()->GetAbsoluteAddress(0xfb8c38); // LE1
-	StringArchiveProxyVTableStart = SDKInitializer::Instance()->GetAbsoluteAddress(0x101e1c0); // LE2 - FGlobalShaderCacheArchive_VTable
-	CreateArchiveProxy = (tCreateArchiveProxy)SDKInitializer::Instance()->GetAbsoluteAddress(0x81d750); // LE1
-	_CreateName = (tSFXNameConstructor)SDKInitializer::Instance()->GetAbsoluteAddress(0xdd800); // LE1
+	GetVertexFactoryTypeList = (tGetVertexFactoryTypeList)SDKInitializer::Instance()->GetAbsoluteAddress(0x8dfcf0); // LE2
+	CreateArchiveProxy = (tCreateArchiveProxy)SDKInitializer::Instance()->GetAbsoluteAddress(0x21d6d0); // LE2
+	_CreateName = (tSFXNameConstructor)SDKInitializer::Instance()->GetAbsoluteAddress(0x78640); // LE2
 
-	// Globals
+	// Direct addresses - VTables
+	MemoryArchiveReaderVTableStart = SDKInitializer::Instance()->GetAbsoluteAddress(0xfbe178); // LE2 - FMemoryReader_VTable
+	MemoryArchiveWriterVTableStart = SDKInitializer::Instance()->GetAbsoluteAddress(0xfbe080); // LE2 - FMemoryWriter_VTable
+	FileReaderVTableStart = SDKInitializer::Instance()->GetAbsoluteAddress(0xfb9fe8); // LE2 - FArchiveFileReader_VTable
+	StringArchiveProxyVTableStart = SDKInitializer::Instance()->GetAbsoluteAddress(0x101e1c0); // LE2 - FGlobalShaderCacheArchive_VTable
+
+	// Direct addresses - Variables
 	GFileManager = (FFileManager**)SDKInitializer::Instance()->GetAbsoluteAddress(0x16823c0); // LE2
 	GError = (FArchive**)SDKInitializer::Instance()->GetAbsoluteAddress(0x1682348); // LE2
 
