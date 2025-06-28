@@ -78,7 +78,8 @@ struct FFileManager
     virtual WCHAR** GetLoadingFileName(void* something) = 0;
 };
 
-FFileManager* GFileManager = nullptr;
+FFileManager** GFileManager = nullptr;
+FArchive** GError = nullptr;
 
 // Used to load packages
 struct UnLinker
@@ -157,7 +158,7 @@ void LoadCommonClassPointers(ISharedProxyInterface* InterfacePtr)
     auto addr = findAddressLeaMov(InterfacePtr, "GFileManager", "48 8b 0d 9c dd 67 01 ff d3 90 4c 89 6c 24 60 48 8b 4c 24 58");
     if (addr != nullptr)
     {
-        GFileManager = static_cast<FFileManager*>(addr);
+        GFileManager = static_cast<FFileManager**>(addr);
         writeln("Found GFileManager at %p", GFileManager);
     }
     else
@@ -204,6 +205,11 @@ tCreateImport CreateImport_orig = nullptr;
 typedef UObject* (*tCreateExport)(ULinkerLoad* Context, int UIndex);
 tCreateExport CreateExport = nullptr;
 tCreateExport CreateExport_orig = nullptr;
+
+// FindPackageFile
+typedef void* (*tFindPackageFile)(void* classPointer, wchar_t* packageName, void* guid, FString* outFName, wchar_t* language);
+tFindPackageFile FindPackageFile = nullptr;
+tFindPackageFile FindPackageFile_orig = nullptr;
 
 // ProcessEvent
 typedef void (*tProcessEvent)(UObject* Context, UFunction* Function, void* Parms, void* Result);

@@ -6,6 +6,7 @@
 #include <thread>
 
 #include "HookPrototypes.h"
+#include "ShaderResearch.h"
 
 SPI_PLUGINSIDE_SUPPORT(L"DebugLogger", L"4.0.0", L"ME3Tweaks", SPI_GAME_LE2, SPI_VERSION_LATEST);
 SPI_PLUGINSIDE_PRELOAD;
@@ -133,6 +134,17 @@ UObject* CreateExport_hook(ULinkerLoad* Context, int i)
 
 	return object;
 }
+
+// =======================
+// FindPackage hook
+// =======================
+void* FindPackageFile_hook(void* classPointer, wchar_t* packageName, void* guid, FString* outFName, wchar_t* language)
+{
+	auto result = FindPackageFile_orig(classPointer, packageName, guid, outFName, language);
+	logger.writeToLog(wstring_format(L"FindPackageFile() for %s", packageName), true, true);
+	return result;
+}
+
 
 // Logs a message from a source
 void logMessage(const wchar_t* logSource, wchar_t* formatStr, void* param1, void* param2, void* param3, void* param4)
@@ -324,10 +336,14 @@ SPI_IMPLEMENT_ATTACH
 	writeln(L"Initializing DebugLogger...");
 	INIT_CHECK_SDK();
 
-	LoadCommonClassPointers(InterfacePtr);
-
 	// Log debug output messages
 	INIT_HOOK_PATTERN(OutputDebugStringW);
+
+	hookShaderResearch(InterfacePtr);
+
+	return true;
+
+	LoadCommonClassPointers(InterfacePtr);
 
 	// CreateImport
 	INIT_FIND_PATTERN_POSTHOOK(CreateImport, /*48 8b c4 55 41*/ "54 41 55 41 56 41 57 48 8b ec 48 83 ec 70 48 c7 45 d0 fe ff ff ff 48 89 58 10 48 89 70 18 48 89 78 20 4c 63 e2");
@@ -358,6 +374,9 @@ SPI_IMPLEMENT_ATTACH
 	// that the game died on
 	INIT_FIND_PATTERN_POSTHOOK(StaticAllocateObject, /*"4c 89 44 24 18*/ "55 56 57 41 54 41 55 41 56 41 57 48 8d ac 24 80 fb ff ff 48 81 ec 80 05 00 00");
 	INIT_HOOK_PATTERN(StaticAllocateObject);
+
+	INIT_FIND_PATTERN_POSTHOOK(FindPackageFile, /*"40 55 56 57 41*/ "54 41 55 41 56 41 57 48 8d 6c 24 e1 48 81 ec e0 00 00 00 48 c7 45 b7 fe ff ff ff 48 89 9c 24 20 01 00 00");
+	INIT_HOOK_PATTERN(FindPackageFile);
 
 	// Logging functions to hook up for writing to disk
 	hookLoggingFunctions(InterfacePtr);
