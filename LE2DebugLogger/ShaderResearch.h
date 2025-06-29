@@ -16,6 +16,39 @@
 
 
 // ===============================================================================================
+// Macros
+// ===============================================================================================
+// Used to define a struct binding setup
+#define IMPLEMENT_STRUCT_BINDING_HOOK(structName) \
+	tSubStructBind structName##Bind = nullptr; \
+	tSubStructBind structName##Bind_orig = nullptr; \
+	void structName##Bind_hook(void* structAddr, FShaderParameterMap* Map) { \
+		HookedStructBinding(structAddr, Map, L#structName, structName##Bind_orig); \
+	} \
+
+// Used to define a struct binding setup (3 parameter version)
+#define IMPLEMENT_STRUCT_BINDING_HOOK3(structName) \
+	tSubStruct3Bind structName##Bind = nullptr; \
+	tSubStruct3Bind structName##Bind_orig = nullptr; \
+	void structName##Bind_hook(void* structAddr, void* unk2, FShaderParameterMap* Map) { \
+		HookedStructBinding(structAddr, unk2, Map, L#structName, structName##Bind_orig); \
+	} \
+
+#define HOOK_STRUCT_BINDING(structName, rva) { \
+	structName##Bind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(rva); \
+	if (SPIReturn rc = ISharedProxyInterface::SPIInterfacePtr->InstallHook(#structName "Bind", structName##Bind, structName##Bind_hook, (void**)&structName##Bind_orig); rc != SPIReturn::Success) { \
+		std::cout << "Failed to hook " << #structName << "::Bind: " << SPIReturnToString(rc) << std::endl; \
+	} \
+} \
+
+#define HOOK_STRUCT_BINDING3(structName, rva) { \
+	structName##Bind = (tSubStruct3Bind)SDKInitializer::Instance()->GetAbsoluteAddress(rva); \
+	if (SPIReturn rc = ISharedProxyInterface::SPIInterfacePtr->InstallHook(#structName "Bind", structName##Bind, structName##Bind_hook, (void**)&structName##Bind_orig); rc != SPIReturn::Success) { \
+		std::wcout << "Failed to hook " << #structName << "::Bind: " << SPIReturnToString(rc) << std::endl; \
+	} \
+} \
+
+// ===============================================================================================
 // TypeDefs
 // ===============================================================================================
 typedef void (*tFShaderParameterBind)(void*, void*, wchar_t*, BOOL);
@@ -263,98 +296,26 @@ void HookedStructBinding(void* structAddr, void* unk2, FShaderParameterMap* Map,
 	}
 }
 
-// FSceneTextureShaderParameters -----------------------------------------------------------------
-tSubStructBind FSceneTextureShaderParametersBind = nullptr;
-tSubStructBind FSceneTextureShaderParametersBind_orig = nullptr;
-void FSceneTextureShaderParametersBind_hook(void* structAddr, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FSceneTextureShaderParameters", FSceneTextureShaderParametersBind_orig);
-}
+// Parameter struct types
+// Some of these might be unused.
+IMPLEMENT_STRUCT_BINDING_HOOK(FSceneTextureShaderParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK(FLightShaftPixelShaderParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK(FDOFShaderParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK3(FMaterialPixelShaderParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK(FSpotLightPolicy_ModShadowPixelParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK(FAmbientOcclusionParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK3(FMaterialBaseShaderParameters); // Need to see if this is in LE2.
+IMPLEMENT_STRUCT_BINDING_HOOK(FFogVolumeVertexShaderParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK(FHeightFogVertexShaderParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK(FDirectionalLightPolicyPixelParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK(FHBAOShaderParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK(FGammaShaderParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK(FColorRemapShaderParameters);
+IMPLEMENT_STRUCT_BINDING_HOOK(FMaterialVertexShaderParameters);
 
-// FLightShaftPixelShaderParameters --------------------------------------------------------------
-tSubStructBind FLightShaftPixelShaderParametersBind = nullptr;
-tSubStructBind FLightShaftPixelShaderParametersBind_orig = nullptr;
-void FLightShaftPixelShaderParametersBind_hook(void* structAddr, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FLightShaftPixelShaderParameters", FLightShaftPixelShaderParametersBind_orig);
-}
+// LE2
+IMPLEMENT_STRUCT_BINDING_HOOK(FSpotlightPolicy_ModShadowPixelParamsType);
 
-// FDOFShaderParameters --------------------------------------------------------------
-const std::wstring FDOFShaderParametersPrefix = L"[FDOFShaderParameters]";
-tSubStructBind FDOFShaderParametersBind = nullptr;
-tSubStructBind FDOFShaderParametersBind_orig = nullptr;
-void FDOFShaderParametersBind_hook(void* structAddr, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FLightShaftPixelShaderParameters", FLightShaftPixelShaderParametersBind_orig);
-}
-
-// FMaterialPixelShaderParameters --------------------------------------------------------------
-const std::wstring FMaterialPixelShaderParametersPrefix = L"[FMaterialPixelShaderParameters]";
-tSubStruct3Bind FMaterialPixelShaderParametersBind = nullptr;
-tSubStruct3Bind FMaterialPixelShaderParametersBind_orig = nullptr;
-void FMaterialPixelShaderParametersBind_hook(void* structAddr, void* unk2, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FLightShaftPixelShaderParameters", FLightShaftPixelShaderParametersBind_orig);
-}
-
-// FSpotLightPolicy_ModShadowPixelParamsType --------------------------------------------------------------
-tSubStructBind FSpotLightPolicy_ModShadowPixelParamsTypeBind = nullptr;
-tSubStructBind FSpotLightPolicy_ModShadowPixelParamsTypeBind_orig = nullptr;
-void FSpotLightPolicy_ModShadowPixelParamsTypeBind_hook(void* structAddr, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FSpotLightPolicy_ModShadowPixelParamsType", FSpotLightPolicy_ModShadowPixelParamsTypeBind_orig);
-}
-
-// FAmbientOcclusionParams --------------------------------------------------------------
-tSubStructBind FAmbientOcclusionParamsBind = nullptr;
-tSubStructBind FAmbientOcclusionParamsBind_orig = nullptr;
-void FAmbientOcclusionParamsBind_hook(void* structAddr, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FAmbientOcclusionParams", FAmbientOcclusionParamsBind_orig);
-}
-
-// FMaterialBaseShaderParameters --------------------------------------------------------------
-tSubStruct3Bind FMaterialBaseShaderParametersBind = nullptr;
-tSubStruct3Bind FMaterialBaseShaderParametersBind_orig = nullptr;
-void FMaterialBaseShaderParametersBind_hook(void* structAddr, void* unk2, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, unk2, Map, L"FMaterialBaseShaderParameters", FMaterialBaseShaderParametersBind_orig);
-}
-
-// FFogVolumeVertexShaderParameters --------------------------------------------------------------
-tSubStructBind FFogVolumeVertexShaderParametersBind = nullptr;
-tSubStructBind FFogVolumeVertexShaderParametersBind_orig = nullptr;
-void FFogVolumeVertexShaderParametersBind_hook(void* structAddr, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FFogVolumeVertexShaderParameters", FFogVolumeVertexShaderParametersBind_orig);
-}
-
-// FHeightFogVertexShaderParameters --------------------------------------------------------------
-tSubStructBind FHeightFogVertexShaderParametersBind = nullptr;
-tSubStructBind FHeightFogVertexShaderParametersBind_orig = nullptr;
-void FHeightFogVertexShaderParametersBind_hook(void* structAddr, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FHeightFogVertexShaderParameters", FHeightFogVertexShaderParametersBind_orig);
-}
-
-// FDirectionalLightPolicyPixelParameters --------------------------------------------------------------
-tSubStructBind FDirectionalLightPolicyPixelParametersBind = nullptr;
-tSubStructBind FDirectionalLightPolicyPixelParametersBind_orig = nullptr;
-void FDirectionalLightPolicyPixelParametersBind_hook(void* structAddr, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FDirectionalLightPolicyPixelParameters", FDirectionalLightPolicyPixelParametersBind_orig);
-}
-
-// FHBAOShaderParameters --------------------------------------------------------------
-tSubStructBind FHBAOShaderParametersBind = nullptr;
-tSubStructBind FHBAOShaderParametersBind_orig = nullptr;
-void FHBAOShaderParametersBind_hook(void* structAddr, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FHBAOShaderParameters", FHBAOShaderParametersBind_orig);
-}
-
-// FGammaShaderParameters --------------------------------------------------------------
-tSubStructBind FGammaShaderParametersBind = nullptr;
-tSubStructBind FGammaShaderParametersBind_orig = nullptr;
-void FGammaShaderParametersBind_hook(void* structAddr, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FGammaShaderParameters", FGammaShaderParametersBind_orig);
-}
-
-// FColorRemapShaderParameters --------------------------------------------------------------
-tSubStructBind FColorRemapShaderParametersBind = nullptr;
-tSubStructBind FColorRemapShaderParametersBind_orig = nullptr;
-void FColorRemapShaderParametersBind_hook(void* structAddr, FShaderParameterMap* Map) {
-	HookedStructBinding(structAddr, Map, L"FColorRemapShaderParameters", FColorRemapShaderParametersBind_orig);
-}
 
 FShader* FShaderConstructFromCompiled_hook(FShader* inShader, CompiledShaderData* compiledInfo, void* unk3, void* unk4)
 {
@@ -549,6 +510,17 @@ void CombinedShaderSerialize_hook(FShader* shader, FArchive* ar) {
 	// Just kidding. A few shaders need it for who knows why.
 	parameterMap.UniformExpressionSet = &DummySet;
 	compiledInfo.ParameterMap = &parameterMap;
+
+	// LE2 ---
+	// LE2 seems to access the code array, while LE1 does not.
+	auto malloced = UnrealMalloc::GMalloc.Malloc(sizeof(TArray<BYTE>));
+	memset(malloced, 0, sizeof(TArray<BYTE>));
+	compiledInfo.Code = (TArray<BYTE>*) malloced;
+	
+	// LE2 also seems to need ShaderType...?
+	compiledInfo.ShaderType = shader->Type;
+
+	// End LE2 --
 	if (shader->Target.Frequency == SF_VERTEX) {
 		// Vertex shaders need a vertex factory, not sure if it matters which one.
 		// Don't know if we need to properly enumerate these...........
@@ -559,12 +531,23 @@ void CombinedShaderSerialize_hook(FShader* shader, FArchive* ar) {
 	int unk4 = 0;
 
 	if (PRINT_FOR_GHIDRA) {
-		void* vtable = GetVTable((void**)shader);
-		void** serializeFunc = (void**)((long long)vtable + (0x8 * sizeof(void*)));
 
-		// For printing out a table you can import with ghidra's ImportSymbols script. It doesn't do namespaces though.
-		auto funcAddr = *(serializeFunc);
-		std::wcout << shader->Type->Name << L"::Serialize 0x" << std::hex << funcAddr << L" f" << std::endl;
+		// Print constructor for deserialization (makes blank object)
+		std::wcout << shader->Type->Name << L"::ConstructForDeserialization 0x" << std::hex << shader->Type->ConstructSerializedRef << L" f" << std::endl;
+
+		// Print constructor with binding addresses
+		//std::wcout << shader->Type->Name << L"::ConstructFromCompiled 0x" << std::hex << shader->Type->ConstructCompiledRef << L" f" << std::endl;
+
+		// Print Serialization Method addresses
+		//auto vtable = GetVTable((void**)shader);
+		//auto originalFunc = SerializationFunctionMap.find(vtable);
+		//if (originalFunc != SerializationFunctionMap.end()) {
+		//	// Invoke the original serialization function
+		//	std::wcout << shader->Type->Name << L"::Serialize 0x" << std::hex << originalFunc->second << L" f" << std::endl;
+		//}
+		//else {
+		//	std::cout << "Serious uh ohs have occurred.\n";
+		//}
 	}
 	else
 	{
@@ -660,22 +643,6 @@ void hookAllShaderSerializationMethods() {
 
 		auto vtable = GetVTable((void**)temp);
 		HookShaderSerialize(vtable);
-		/*
-		void** serializationPtr = (void**)((long long)vtable + (0x8 * sizeof(void*))); // LE1 - 0x8 into VTable is Serialize()
-		void* serializationFunc = *serializationPtr;
-
-
-		// Hook the serialization method
-		tShaderSerialize originalFunc = nullptr;
-		auto hookResult = ISharedProxyInterface::SPIInterfacePtr->InstallHook(shaderName.c_str(), serializationFunc, CombinedShaderSerialize_hook, (void**)&originalFunc);
-		if (hookResult != SPIReturn::Success)
-		{
-			std::cout << "Failed to hook " << shaderName << " @ " << std::hex << serializationFunc << ": " << SPIReturnToString(hookResult) << std::endl;
-		}
-
-		// Record the original serialization function
-		SerializationFunctionMap.emplace(vtable, originalFunc);
-		*/
 		shaderTypeList = shaderTypeList->NextItem;
 		numDone++;
 	}
@@ -709,9 +676,12 @@ void SerializeGlobalShaders_hook(EShaderPlatform platform, FArchive* Ar) {
 // the SPI system doesn't know how to hook a hook
 bool hookShaderResearch(ISharedProxyInterface* InterfacePtr) {
 
+	SPIReturn result = SPIReturn::Success;
+
 	// PUT THIS FIRST AS SHADER SERIALIZATION HAPPENS EARLY!
 	SerializeGlobalShaders = (tSerializeGlobalShaders)SDKInitializer::Instance()->GetAbsoluteAddress(0x23c850); // LE2
-	InterfacePtr->InstallHook("SerializeGlobalShaders", SerializeGlobalShaders, SerializeGlobalShaders_hook, (void**)&SerializeGlobalShaders_orig);
+	result = InterfacePtr->InstallHook("SerializeGlobalShaders", SerializeGlobalShaders, SerializeGlobalShaders_hook, (void**)&SerializeGlobalShaders_orig);
+
 
 	//FShaderSerialize = (tFShaderSerialize)SDKInitializer::Instance()->GetAbsoluteAddress(0x259b20); // LE1
 	//InterfacePtr->InstallHook("FShaderSerialize", FShaderSerialize, FShaderSerialize_hook, (void**)&FShaderSerialize_orig);
@@ -720,65 +690,49 @@ bool hookShaderResearch(ISharedProxyInterface* InterfacePtr) {
 
 	/** SERIALIZATION */
 	FShaderParameterSerialize = (tFShaderParameterSerialize)SDKInitializer::Instance()->GetAbsoluteAddress(0x351220); // LE2
-	InterfacePtr->InstallHook("FShaderParameterSerialize", FShaderParameterSerialize, FShaderParameterSerialize_hook, (void**)&FShaderParameterSerialize_orig);
+	result = InterfacePtr->InstallHook("FShaderParameterSerialize", FShaderParameterSerialize, FShaderParameterSerialize_hook, (void**)&FShaderParameterSerialize_orig);
+	if (result != SPIReturn::Success) { std::cout << "Failed to install FShaderParameterSerialize hook: " << SPIReturnToString(result) << std::endl; }
 
 	FShaderResourceParameterSerialize = (tFShaderParameterSerialize)SDKInitializer::Instance()->GetAbsoluteAddress(0x351270); // LE2
-	InterfacePtr->InstallHook("FShaderResourceParameterSerialize", FShaderResourceParameterSerialize, FShaderResourceParameterSerialize_hook, (void**)&FShaderResourceParameterSerialize_orig);
+	result = InterfacePtr->InstallHook("FShaderResourceParameterSerialize", FShaderResourceParameterSerialize, FShaderResourceParameterSerialize_hook, (void**)&FShaderResourceParameterSerialize_orig);
+	if (result != SPIReturn::Success) { std::cout << "Failed to install FShaderResourceParameterSerialize hook: " << SPIReturnToString(result) << std::endl; }
 
 	FVertexFactoryParameterRefSerialize = (tFVertexFactoryParameterRefSerialize)SDKInitializer::Instance()->GetAbsoluteAddress(0x8d9fb0); // LE1
-	InterfacePtr->InstallHook("FVertexFactoryParameterRefSerialize", FVertexFactoryParameterRefSerialize, FVertexFactoryParameterRefSerialize_hook, (void**)&FVertexFactoryParameterRefSerialize_orig);
+	result = InterfacePtr->InstallHook("FVertexFactoryParameterRefSerialize", FVertexFactoryParameterRefSerialize, FVertexFactoryParameterRefSerialize_hook, (void**)&FVertexFactoryParameterRefSerialize_orig);
+	if (result != SPIReturn::Success) { std::cout << "Failed to install FVertexFactoryParameterRefSerialize hook: " << SPIReturnToString(result) << std::endl; }
 
 	/** BINDS */
+	FShaderConstructFromCompiled = (tFShaderConstructFromCompiled)SDKInitializer::Instance()->GetAbsoluteAddress(0x34e010); // LE2
+	result = InterfacePtr->InstallHook("FShaderConstructFromCompiled", FShaderConstructFromCompiled, FShaderConstructFromCompiled_hook, (void**)&FShaderConstructFromCompiled_orig);
+	if (result != SPIReturn::Success) { std::cout << "Failed to install FShaderConstructFromCompiled hook: " << SPIReturnToString(result) << std::endl; }
+
 	FShaderParameterBind = (tFShaderParameterBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x355300); // LE2
-	InterfacePtr->InstallHook("FShaderParameterBind", FShaderParameterBind, FShaderParameterBind_hook, (void**)&FShaderParameterBind_orig);
+	result = InterfacePtr->InstallHook("FShaderParameterBind", FShaderParameterBind, FShaderParameterBind_hook, (void**)&FShaderParameterBind_orig);
+	if (result != SPIReturn::Success) { std::cout << "Failed to install FShaderParameterBind hook: " << SPIReturnToString(result) << std::endl; }
 
 	FShaderResourceParameterBind = (tFShaderParameterBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x355390); // LE2
-	InterfacePtr->InstallHook("FShaderResourceParameterBind", FShaderResourceParameterBind, FShaderResourceParameterBind_hook, (void**)&FShaderResourceParameterBind_orig);
+	result = InterfacePtr->InstallHook("FShaderResourceParameterBind", FShaderResourceParameterBind, FShaderResourceParameterBind_hook, (void**)&FShaderResourceParameterBind_orig);
+	if (result != SPIReturn::Success) { std::cout << "Failed to install FShaderResourceParameterBind hook: " << SPIReturnToString(result) << std::endl; }
 
-	/*
-	FSceneTextureShaderParametersBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x774380); // LE1
-	InterfacePtr->InstallHook("FSceneTextureShaderParametersBind", FSceneTextureShaderParametersBind, FSceneTextureShaderParametersBind_hook, (void**)&FSceneTextureShaderParametersBind_orig);
 
-	FLightShaftPixelShaderParametersBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x1deef0); // LE1
-	InterfacePtr->InstallHook("FLightShaftPixelShaderParametersBind", FLightShaftPixelShaderParametersBind, FLightShaftPixelShaderParametersBind_hook, (void**)&FLightShaftPixelShaderParametersBind_orig);
 
-	FDOFShaderParametersBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x1b4b20); // LE1
-	InterfacePtr->InstallHook("FDOFShaderParametersBind", FDOFShaderParametersBind, FDOFShaderParametersBind_hook, (void**)&FDOFShaderParametersBind_orig);
-
-	FMaterialPixelShaderParametersBind = (tSubStruct3Bind)SDKInitializer::Instance()->GetAbsoluteAddress(0x672970); // LE1
-	InterfacePtr->InstallHook("FMaterialPixelShaderParametersBind", FMaterialPixelShaderParametersBind, FMaterialPixelShaderParametersBind_hook, (void**)&FMaterialPixelShaderParametersBind_orig);
-
-	FSpotLightPolicy_ModShadowPixelParamsTypeBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x263950); // LE1
-	InterfacePtr->InstallHook("FSpotLightPolicy_ModShadowPixelParamsTypeBind", FSpotLightPolicy_ModShadowPixelParamsTypeBind, FSpotLightPolicy_ModShadowPixelParamsTypeBind_hook, (void**)&FSpotLightPolicy_ModShadowPixelParamsTypeBind_orig);
-
-	FAmbientOcclusionParamsBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x7c3760); // LE1
-	InterfacePtr->InstallHook("FAmbientOcclusionParamsBind", FAmbientOcclusionParamsBind, FAmbientOcclusionParamsBind_hook, (void**)&FAmbientOcclusionParamsBind_orig);
-
-	// This seems to not be in LEC as a struct but the patterns are there. LE1 has this in its own function.
-	FMaterialBaseShaderParametersBind = (tSubStruct3Bind)SDKInitializer::Instance()->GetAbsoluteAddress(0x672f40); // LE1
-	InterfacePtr->InstallHook("FMaterialBaseShaderParametersBind", FMaterialBaseShaderParametersBind, FMaterialBaseShaderParametersBind_hook, (void**)&FMaterialBaseShaderParametersBind_orig);
-
-	FFogVolumeVertexShaderParametersBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x822100); // LE1
-	InterfacePtr->InstallHook("FFogVolumeVertexShaderParametersBind", FFogVolumeVertexShaderParametersBind, FFogVolumeVertexShaderParametersBind_hook, (void**)&FFogVolumeVertexShaderParametersBind_orig);
-
-	FShaderConstructFromCompiled = (tFShaderConstructFromCompiled)SDKInitializer::Instance()->GetAbsoluteAddress(0x247300); // LE1
-	InterfacePtr->InstallHook("FShaderConstructFromCompiled", FShaderConstructFromCompiled, FShaderConstructFromCompiled_hook, (void**)&FShaderConstructFromCompiled_orig);
-
-	FHeightFogVertexShaderParametersBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x742bd0); // LE1
-	InterfacePtr->InstallHook("FHeightFogVertexShaderParametersBind", FHeightFogVertexShaderParametersBind, FHeightFogVertexShaderParametersBind_hook, (void**)&FHeightFogVertexShaderParametersBind_orig);
-
-	FDirectionalLightPolicyPixelParametersBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x1bca80); // LE1
-	InterfacePtr->InstallHook("FDirectionalLightPolicyPixelParametersBind", FDirectionalLightPolicyPixelParametersBind, FDirectionalLightPolicyPixelParametersBind_hook, (void**)&FDirectionalLightPolicyPixelParametersBind_orig);
-
-	FHBAOShaderParametersBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x7c37e0); // LE1
-	InterfacePtr->InstallHook("FHBAOShaderParametersBind", FHBAOShaderParametersBind, FHBAOShaderParametersBind_hook, (void**)&FHBAOShaderParametersBind_orig);
-
-	FGammaShaderParametersBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x27cc80); // LE1
-	InterfacePtr->InstallHook("FGammaShaderParametersBind", FGammaShaderParametersBind, FGammaShaderParametersBind_hook, (void**)&FGammaShaderParametersBind_orig);
-
-	FColorRemapShaderParametersBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x27cb80); // LE1
-	InterfacePtr->InstallHook("FColorRemapShaderParametersBind", FColorRemapShaderParametersBind, FColorRemapShaderParametersBind_hook, (void**)&FColorRemapShaderParametersBind_orig);
-	*/
+	HOOK_STRUCT_BINDING(FSceneTextureShaderParameters, 0x354dc0);
+	HOOK_STRUCT_BINDING(FLightShaftPixelShaderParameters, 0x25a220);
+	HOOK_STRUCT_BINDING(FDOFShaderParameters, 0x1e2c30);
+	HOOK_STRUCT_BINDING3(FMaterialPixelShaderParameters, 0x28d340);
+	//FSpotLightPolicy_ModShadowPixelParamsTypeBind = (tSubStructBind)SDKInitializer::Instance()->GetAbsoluteAddress(0x263950); // LE1
+	//InterfacePtr->InstallHook("FSpotLightPolicy_ModShadowPixelParamsTypeBind", FSpotLightPolicy_ModShadowPixelParamsTypeBind, FSpotLightPolicy_ModShadowPixelParamsTypeBind_hook, (void**)&FSpotLightPolicy_ModShadowPixelParamsTypeBind_orig);
+	HOOK_STRUCT_BINDING(FAmbientOcclusionParameters, 0x1394c0);
+	// This seems to not be in LEC as a struct but the patterns are there. LE1/2 has this in its own function.
+	HOOK_STRUCT_BINDING3(FMaterialBaseShaderParameters, 0x28d910);
+	HOOK_STRUCT_BINDING(FFogVolumeVertexShaderParameters, 0x2242c0); // LEC labels this as FConstantDensityPolicy_VertexShaderParametersType
+	HOOK_STRUCT_BINDING(FHeightFogVertexShaderParameters, 0x2243c0);
+	HOOK_STRUCT_BINDING(FHBAOShaderParameters, 0x139540);
+	//HOOK_STRUCT_BINDING(FDirectionalLightPolicyPixelParameters, );
+	HOOK_STRUCT_BINDING(FGammaShaderParameters, 0x2579c0);
+	HOOK_STRUCT_BINDING(FColorRemapShaderParameters, 0x2579c0);
+	// LE2
+	HOOK_STRUCT_BINDING(FMaterialVertexShaderParameters, 0x28d9c0);
 
 	// Direct addresses - Functions
 	GetShaderTypeList = (tGetShaderTypeList)SDKInitializer::Instance()->GetAbsoluteAddress(0x35a1a0); // LE2
