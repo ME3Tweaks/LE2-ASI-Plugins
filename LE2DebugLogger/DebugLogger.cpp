@@ -6,7 +6,7 @@
 #include <thread>
 
 #include "HookPrototypes.h"
-#include "ShaderResearch.h"
+#include "../../Shared-ASI/ShaderDecomp/ShaderResearch.h"
 
 SPI_PLUGINSIDE_SUPPORT(L"DebugLogger", L"4.0.0", L"ME3Tweaks", SPI_GAME_LE2, SPI_VERSION_LATEST);
 SPI_PLUGINSIDE_PRELOAD;
