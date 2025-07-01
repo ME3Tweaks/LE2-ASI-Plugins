@@ -35111,7 +35111,7 @@ typedef FShaderType* (*tGetShaderTypeCast)(void*);
 // Signature seems to be that the data being accessed comes from Param1
 // Param 2 appears unused, no idea what it is.
 // Param 3 and 4 are some sort of numbers.
-typedef void* (*tConstructCompiledShader)(CompiledShaderData*, int*, int*, int*);
+typedef FShader* (*tConstructCompiledShader)(CompiledShaderData*, int*, int*, int*);
 // Type signature for calling ShouldCache()
 typedef bool (*tSTShouldCache)(EShaderPlatform, void*, void*);
 
@@ -35159,6 +35159,23 @@ struct FShaderCompilerEnvironment
 	FShaderParameterMap* ParameterMap;
 };
 
+// This looks like a base class
+class FVertexFactoryShaderParameters {
+	// VTable decomp seems to show Bind and Serialize and 2 other unknown methods that seem to deal with RHI.
+	virtual ~FVertexFactoryShaderParameters();
+	virtual void Bind(FShaderParameterMap*); // Binds parameters to this object
+	virtual void Serialize(FArchive*); // operator<<
+	virtual void Unknown();
+	virtual void Unknown2();
+};
+
+
+// Forward Dec
+struct FVertexFactoryType;
+
+typedef FVertexFactoryShaderParameters* (*tVFConstructParameters)(FVertexFactoryType*);
+
+
 struct FVertexFactoryType
 {
 	void* _vftable;
@@ -35170,7 +35187,7 @@ struct FVertexFactoryType
 	BITFIELD bSupportsStaticLighting : 1;
 	BITFIELD bSupportsDynamicLighting : 1;
 	BITFIELD bSupportsPrecisePrevWorldPos : 1;
-	void* ConstructParameters;
+	tVFConstructParameters ConstructParameters;
 	tVFShouldCache ShouldCacheRef;
 	tModifyCompilationEnvironment ModifyCompilationEnvironmentRef;
 	INT MinPackageVersion;
@@ -35486,6 +35503,28 @@ struct FMaterialShaderMap {
 	INT FlagSet;
 
 	// A lot more stuff seems to follow below in decomp.
+};
+
+struct FShaderParameter {
+	WORD BufferIndex;
+	WORD BaseIndex;
+	WORD NumBytes;
+};
+
+struct FShaderResourceParameter {
+	WORD BaseIndex;
+	WORD NumResources;
+	WORD SamplerIndex;
+};
+
+// Appears to be templated, great...
+template<typename ParamType>
+struct TUniformParameter
+{
+	int Index;
+	ParamType Parameter;
+
+	// Serializes as Index << Parameter
 };
 
 
